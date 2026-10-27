@@ -1,0 +1,351 @@
+{
+  "id": "chorus",
+  "schemaVersion": 1,
+  "version": "0.3.0",
+  "name": "Bellglass Chorus",
+  "description": "Echo the opening reaction, conduct its order, and earn bonuses for Infusion → Browning or Browning → Extraction.",
+  "color": "#735aa0",
+  "pale": "#f0e9ff",
+  "symbol": "♫",
+  "openingIds": [
+    "chorus.bell-herb",
+    "chorus.glass-noodle"
+  ],
+  "residues": [
+    {
+      "id": "chorus.tuned-rim",
+      "name": "Tuned Rim",
+      "text": "Every echo costs 0.08 / 0.05 presence instead of 0.10.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "echoes",
+        "target": 6,
+        "text": "Create 6 source echoes."
+      }
+    },
+    {
+      "id": "chorus.silver-note",
+      "name": "Silver Note",
+      "text": "When 3 distinct common reactions score, add +100% / +200% of the opening pulse to its echo.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "chemistryThree",
+        "target": 3,
+        "text": "Score 3 distinct common reactions in 3 servings."
+      }
+    },
+    {
+      "id": "chorus.counterpoint",
+      "name": "Counterpoint",
+      "text": "Harmony and Crescendo copies gain ×1.5 / ×2.5 points. Both still require their specific reaction order.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "sequences",
+        "target": 3,
+        "text": "Trigger Harmony or Crescendo 3 times in total."
+      },
+      "imageId": "chorus.silver-note",
+      "symbol": "♫"
+    },
+    {
+      "id": "chorus.encore",
+      "name": "Encore",
+      "text": "With an operational echo source and 3 positive common reactions, copy 35% / 65% of the LAST common reaction as an extra derived pulse. No extra presence cost; cannot echo again.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "chemistryThree",
+        "target": 4,
+        "text": "Score 3 distinct common reactions in 4 servings."
+      },
+      "imageId": "chorus.tuned-rim",
+      "symbol": "»"
+    }
+  ],
+  "cards": [
+    {
+      "id": "chorus.glass-noodle",
+      "name": "Glass Noodle",
+      "type": "Grain",
+      "rarity": "uncommon",
+      "volume": 0.35,
+      "basePower": 70,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1
+      },
+      "tags": [
+        "echoStrong"
+      ],
+      "temperature": [
+        [
+          0,
+          0.5
+        ],
+        [
+          40,
+          1.1
+        ],
+        [
+          80,
+          1.2
+        ],
+        [
+          120,
+          0.6
+        ]
+      ],
+      "residueId": "chorus.tuned-rim",
+      "text": "At any heat, copies 125% of the first positive, echoable original reaction onto its scored ingredients. Costs 0.10 presence each serving (0.08 / 0.05 / 0.02 with Tuned Rim). Takes priority over Bell Herb. Derived echoes and sequence bonuses never echo again."
+    },
+    {
+      "id": "chorus.bell-herb",
+      "name": "Bell Herb",
+      "type": "Vegetable",
+      "rarity": "common",
+      "volume": 0.3,
+      "basePower": 85,
+      "reactivity": 1,
+      "properties": {
+        "aromatic": 1
+      },
+      "tags": [
+        "echoWeak"
+      ],
+      "temperature": [
+        [
+          0,
+          0.5
+        ],
+        [
+          40,
+          1.2
+        ],
+        [
+          80,
+          1.15
+        ],
+        [
+          120,
+          0.5
+        ]
+      ],
+      "residueId": "chorus.tuned-rim",
+      "text": "Copies 75% of the first positive, echoable original reaction for 0.10 presence (less with Tuned Rim). Glass Noodle takes priority. Conductors choose the opener; Aromatic pairs with Fat for Infusion at 40–100°C."
+    },
+    {
+      "id": "chorus.chime-fruit",
+      "name": "Chime Fruit",
+      "type": "Fruit",
+      "rarity": "common",
+      "volume": 0.3,
+      "basePower": 115,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1,
+        "aromatic": 1
+      },
+      "tags": [
+        "conductBrowning"
+      ],
+      "temperature": [
+        [
+          0,
+          0.7
+        ],
+        [
+          40,
+          1.1
+        ],
+        [
+          80,
+          1.3
+        ],
+        [
+          120,
+          0.6
+        ]
+      ],
+      "residueId": "chorus.silver-note",
+      "text": "Conductor: moves Browning to the front, or Preservation at 0–60°C. If several conductors are present, the oldest active one leads. Browning before Extraction unlocks Resonant Marrow’s Crescendo. Requires at least 0.25 presence to conduct."
+    },
+    {
+      "id": "chorus.cream",
+      "name": "Silver Cream",
+      "type": "Dairy",
+      "rarity": "common",
+      "volume": 0.3,
+      "basePower": 100,
+      "reactivity": 1,
+      "properties": {
+        "fat": 2
+      },
+      "tags": [
+        "conductInfusion"
+      ],
+      "temperature": [
+        [
+          0,
+          0.4
+        ],
+        [
+          40,
+          1.1
+        ],
+        [
+          80,
+          1.4
+        ],
+        [
+          120,
+          0.4
+        ]
+      ],
+      "residueId": "chorus.silver-note",
+      "text": "Conductor: moves Infusion to the front. Oldest active conductor wins. Fat 2 + Aromatic enables Infusion at 40–100°C; with Quiet Mushroom, following it with Browning unlocks Harmony. Replace an older conductor to change the lead."
+    },
+    {
+      "id": "chorus.marrow",
+      "name": "Resonant Marrow",
+      "type": "Meat",
+      "rarity": "common",
+      "volume": 0.5,
+      "basePower": 180,
+      "reactivity": 1,
+      "properties": {
+        "protein": 2
+      },
+      "tags": [
+        "crescendoPayoff"
+      ],
+      "temperature": [
+        [
+          0,
+          0.3
+        ],
+        [
+          60,
+          0.9
+        ],
+        [
+          80,
+          1.4
+        ],
+        [
+          120,
+          0.7
+        ]
+      ],
+      "residueId": "chorus.silver-note",
+      "text": "Crescendo: at 70–110°C, when Browning scores before Extraction in the same serving, add a derived copy of Extraction worth 100% × this Marrow’s presence. Only the oldest operational Marrow triggers. Protein 2 enables Browning; reversing the order gives no Crescendo."
+    },
+    {
+      "id": "chorus.mushroom",
+      "name": "Quiet Mushroom",
+      "type": "Fungus",
+      "rarity": "uncommon",
+      "volume": 0.35,
+      "basePower": 120,
+      "reactivity": 1.1,
+      "properties": {
+        "aromatic": 2
+      },
+      "tags": [
+        "harmonyPayoff"
+      ],
+      "temperature": [
+        [
+          0,
+          1
+        ],
+        [
+          40,
+          1.4
+        ],
+        [
+          80,
+          1
+        ],
+        [
+          120,
+          0.25
+        ]
+      ],
+      "residueId": "chorus.tuned-rim",
+      "text": "Harmony: at 70–100°C, when Infusion scores before Browning in the same serving, add a derived copy of Browning worth 100% × this Mushroom’s presence. Only the oldest operational Mushroom triggers. Silver Cream can conduct Infusion first; reversed order gives no Harmony."
+    },
+    {
+      "id": "chorus.gel",
+      "name": "Clear Gel",
+      "type": "Mineral",
+      "rarity": "uncommon",
+      "volume": 0.25,
+      "basePower": 55,
+      "reactivity": 1,
+      "properties": {
+        "mineral": 1
+      },
+      "tags": [
+        "echoKeeper"
+      ],
+      "temperature": [
+        [
+          0,
+          0.8
+        ],
+        [
+          40,
+          1.1
+        ],
+        [
+          60,
+          1.1
+        ],
+        [
+          90,
+          0.6
+        ],
+        [
+          120,
+          0.3
+        ]
+      ],
+      "residueId": "chorus.tuned-rim",
+      "text": "At 40–60°C, the oldest echo source retains at least 96% after serving. Echo presence costs still apply first. Mineral enables Extraction with Acid at 50–120°C, helping complete a three-reaction Silver Note serving."
+    },
+    {
+      "id": "chorus.citrus",
+      "name": "Crystal Citrus",
+      "type": "Fruit",
+      "rarity": "rare",
+      "volume": 0.3,
+      "basePower": 80,
+      "reactivity": 1.2,
+      "properties": {
+        "acid": 2
+      },
+      "tags": [
+        "conductExtraction"
+      ],
+      "temperature": [
+        [
+          0,
+          1.2
+        ],
+        [
+          40,
+          1.25
+        ],
+        [
+          80,
+          0.8
+        ],
+        [
+          120,
+          0.2
+        ]
+      ],
+      "residueId": "chorus.silver-note",
+      "text": "Conductor: moves Extraction to the front (Acid + Mineral at 50–120°C). Oldest active conductor wins. Use it to echo a strong Extraction, but leading Extraction prevents Browning → Extraction Crescendo unless an older conductor leads Browning."
+    }
+  ]
+}

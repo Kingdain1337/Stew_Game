@@ -1,0 +1,348 @@
+{
+  "id": "hearth",
+  "schemaVersion": 1,
+  "version": "0.3.0",
+  "name": "Char Hearth",
+  "description": "Bank Char to strengthen Browning, flare at full capacity, or cash out a Blaze at 110°C+.",
+  "color": "#c45733",
+  "pale": "#fff0dd",
+  "symbol": "✹",
+  "openingIds": [
+    "hearth.smokeleaf",
+    "hearth.soot-pepper"
+  ],
+  "residues": [
+    {
+      "id": "hearth.banked-embers",
+      "name": "Banked Embers",
+      "text": "Every furnace burn costs 0.15 / 0.10 presence instead of 0.20. Overflow points gain ×1.75 / ×2.5.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "burns",
+        "target": 6,
+        "text": "Fuel the furnace 6 times."
+      }
+    },
+    {
+      "id": "hearth.coal-keeper",
+      "name": "Coal Keeper",
+      "text": "Begin each new chapter with +2 / +4 Char, capped at 6. Full-six Blaze points gain ×1.5 / ×2.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "fullBlaze",
+        "target": 1,
+        "text": "Spend all 6 Char in a Blaze."
+      }
+    },
+    {
+      "id": "hearth.red-glaze",
+      "name": "Red Glaze",
+      "text": "With 3+ banked Char, Browning bonus points gain ×1.5 / ×2. This multiplies the furnace’s banked-Char boost.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "hotBrowning",
+        "target": 4,
+        "text": "Score Browning at 90°C+ in 4 servings."
+      },
+      "imageId": "hearth.banked-embers",
+      "symbol": "✦"
+    },
+    {
+      "id": "hearth.ash-memory",
+      "name": "Ash Memory",
+      "text": "Every Blaze returns 1 / 2 Char immediately after spending the bank. Returned Char can strengthen this bowl’s Browning with a furnace.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "charSpent",
+        "target": 10,
+        "text": "Spend a total of 10 Char on Blaze or cool protection."
+      },
+      "imageId": "hearth.coal-keeper",
+      "symbol": "↻"
+    }
+  ],
+  "cards": [
+    {
+      "id": "hearth.smokeleaf",
+      "name": "Smokeleaf",
+      "type": "Vegetable",
+      "rarity": "common",
+      "volume": 0.35,
+      "basePower": 75,
+      "reactivity": 1,
+      "properties": {
+        "aromatic": 1
+      },
+      "tags": [
+        "furnaceSource"
+      ],
+      "temperature": [
+        [
+          0,
+          0.3
+        ],
+        [
+          60,
+          0.7
+        ],
+        [
+          90,
+          1.25
+        ],
+        [
+          120,
+          1.5
+        ]
+      ],
+      "residueId": "hearth.banked-embers",
+      "text": "Oldest furnace burns 0.20 of the oldest eligible Protein presence at 90°C+ to gain 1 Char. Banked Char multiplies Browning by 1 + 0.20 × Char. At 6 Char, further burns flare for 120 points instead. At 110°C+, spend 3–6 Char on a Blaze worth 60 points per Char."
+    },
+    {
+      "id": "hearth.soot-pepper",
+      "name": "Soot Pepper",
+      "type": "Spice",
+      "rarity": "common",
+      "volume": 0.25,
+      "basePower": 80,
+      "reactivity": 1.3,
+      "properties": {
+        "aromatic": 1
+      },
+      "tags": [
+        "furnaceSource"
+      ],
+      "temperature": [
+        [
+          0,
+          0.2
+        ],
+        [
+          60,
+          0.6
+        ],
+        [
+          90,
+          1.4
+        ],
+        [
+          120,
+          1.6
+        ]
+      ],
+      "residueId": "hearth.banked-embers",
+      "text": "Alternative furnace: at 90°C+, burn 0.20 Protein presence for 1 Char, or a 120-point Overflow at the cap of 6. Only the oldest furnace burns. Banked Char strengthens Browning; 110°C+ cashes out 3+ Char in a Blaze. Aromatic pairs with Fat for Infusion at 40–100°C."
+    },
+    {
+      "id": "hearth.marrow",
+      "name": "Marrow Scrap",
+      "type": "Meat",
+      "rarity": "common",
+      "volume": 0.45,
+      "basePower": 115,
+      "reactivity": 1,
+      "properties": {
+        "protein": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.4
+        ],
+        [
+          60,
+          1
+        ],
+        [
+          90,
+          1.3
+        ],
+        [
+          120,
+          0.8
+        ]
+      ],
+      "residueId": "hearth.coal-keeper",
+      "text": "Protein feeds the oldest furnace at 90°C+, losing 0.20 presence before scoring (less with Banked Embers). Pair with Sugar for Browning at 70–110°C: each banked Char adds 20% to that reaction while a live furnace remains."
+    },
+    {
+      "id": "hearth.bean",
+      "name": "Old Bean",
+      "type": "Vegetable",
+      "rarity": "common",
+      "volume": 0.4,
+      "basePower": 105,
+      "reactivity": 1,
+      "properties": {
+        "protein": 1,
+        "sugar": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.5
+        ],
+        [
+          40,
+          1
+        ],
+        [
+          90,
+          1.2
+        ],
+        [
+          120,
+          0.7
+        ]
+      ],
+      "residueId": "hearth.coal-keeper",
+      "text": "Protein and Sugar can activate Browning at 70–110°C without another ingredient. A furnace can burn this Bean to build Char, which strengthens Browning, but the presence cost reduces both of this card’s properties."
+    },
+    {
+      "id": "hearth.dumpling",
+      "name": "Ash Dumpling",
+      "type": "Grain",
+      "rarity": "uncommon",
+      "volume": 0.4,
+      "basePower": 100,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1
+      },
+      "tags": [
+        "charPayoff"
+      ],
+      "temperature": [
+        [
+          0,
+          0.7
+        ],
+        [
+          40,
+          1
+        ],
+        [
+          90,
+          1.3
+        ],
+        [
+          120,
+          0.9
+        ]
+      ],
+      "residueId": "hearth.banked-embers",
+      "text": "The oldest Dumpling scores 25 × banked Char × its presence every serving, at any heat. This does not spend Char. A 110°C+ Blaze spends the bank first, so keep heat at 105°C or lower to keep earning the stored-Char bonus."
+    },
+    {
+      "id": "hearth.cinder-bean",
+      "name": "Cinder Bean",
+      "type": "Vegetable",
+      "rarity": "uncommon",
+      "volume": 0.35,
+      "basePower": 90,
+      "reactivity": 1,
+      "properties": {
+        "protein": 1
+      },
+      "tags": [
+        "charKeeper"
+      ],
+      "temperature": [
+        [
+          0,
+          0.7
+        ],
+        [
+          40,
+          1.2
+        ],
+        [
+          60,
+          1.2
+        ],
+        [
+          90,
+          0.7
+        ],
+        [
+          120,
+          0.3
+        ]
+      ],
+      "residueId": "hearth.coal-keeper",
+      "text": "At 40–60°C, spend 1 Char to retain 96% presence on both the oldest other furnace and the oldest other Protein ingredient. Protects up to two distinct ingredients, even in the 3 L pot; does nothing if neither target exists."
+    },
+    {
+      "id": "hearth.truffle",
+      "name": "Ember Truffle",
+      "type": "Fungus",
+      "rarity": "uncommon",
+      "volume": 0.4,
+      "basePower": 185,
+      "reactivity": 1,
+      "properties": {
+        "aromatic": 1
+      },
+      "tags": [
+        "blazeBooster"
+      ],
+      "temperature": [
+        [
+          0,
+          0.3
+        ],
+        [
+          60,
+          0.7
+        ],
+        [
+          90,
+          1.5
+        ],
+        [
+          120,
+          1.7
+        ]
+      ],
+      "residueId": "hearth.banked-embers",
+      "text": "While operational, a Blaze at 110°C+ scores 80 per Char instead of 60; copies do not stack. A Blaze needs at least 3 Char and spends the whole bank after this turn’s furnace burn. Aromatic also supports Infusion, which stops above 100°C."
+    },
+    {
+      "id": "hearth.pear",
+      "name": "Smoke Pear",
+      "type": "Fruit",
+      "rarity": "rare",
+      "volume": 0.3,
+      "basePower": 120,
+      "reactivity": 1.3,
+      "properties": {
+        "sugar": 1,
+        "aromatic": 1
+      },
+      "tags": [
+        "overflowBooster"
+      ],
+      "temperature": [
+        [
+          0,
+          0.5
+        ],
+        [
+          40,
+          0.9
+        ],
+        [
+          90,
+          1.4
+        ],
+        [
+          120,
+          1
+        ]
+      ],
+      "residueId": "hearth.coal-keeper",
+      "text": "While operational, Overflow flares score ×1.5: 180 points before residue bonuses. At 90°C+, Overflow requires a live furnace, eligible Protein and a bank already at 6 Char before burning. Sugar supports Browning; Aromatic supports Infusion."
+    }
+  ]
+}

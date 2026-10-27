@@ -1,0 +1,276 @@
+{
+  "id": "pantry",
+  "schemaVersion": 1,
+  "version": "0.3.0",
+  "name": "Castle Pantry",
+  "description": "Familiar ingredients and universal reactions bridge every deck.",
+  "color": "#c87938",
+  "pale": "#fff0d8",
+  "symbol": "✦",
+  "openingIds": [],
+  "residues": [
+    {
+      "id": "pantry.hearth-coating",
+      "name": "Hearth Coating",
+      "text": "Browning and Extraction bonus points ×1.5 / ×2. No extra heat condition.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "browning",
+        "target": 3,
+        "text": "Score Browning in 3 servings."
+      }
+    },
+    {
+      "id": "pantry.cool-coating",
+      "name": "Cool Coating",
+      "text": "Infusion and Preservation bonus points ×1.5 / ×2. No extra heat condition.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "infusion",
+        "target": 3,
+        "text": "Score Infusion in 3 servings."
+      }
+    },
+    {
+      "id": "pantry.tasting-spoon",
+      "name": "Tasting Spoon",
+      "text": "Small servings score ×0.80 / ×0.95 instead of ×0.65. Their slow depletion is unchanged.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "small",
+        "target": 6,
+        "text": "Serve 6 small bowls."
+      },
+      "imageId": "pantry.cool-coating",
+      "symbol": "◡"
+    },
+    {
+      "id": "pantry.grand-table",
+      "name": "Grand Table",
+      "text": "Large servings with at least 3 non-system ingredient types score ×1.70 / ×1.90 instead of ×1.50.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "grand",
+        "target": 4,
+        "text": "Serve 4 large bowls that each score at least 2 common reactions."
+      },
+      "imageId": "pantry.hearth-coating",
+      "symbol": "♜"
+    }
+  ],
+  "cards": [
+    {
+      "id": "pantry.beef",
+      "name": "Beef",
+      "type": "Meat",
+      "rarity": "common",
+      "volume": 0.8,
+      "basePower": 200,
+      "reactivity": 1,
+      "properties": {
+        "protein": 2
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.25
+        ],
+        [
+          50,
+          0.75
+        ],
+        [
+          70,
+          1.35
+        ],
+        [
+          100,
+          1.45
+        ],
+        [
+          120,
+          0.55
+        ]
+      ],
+      "residueId": "pantry.hearth-coating",
+      "text": "Protein pairs with Sugar for Browning at 70–110°C. At 90°C+, a Hearth furnace can spend Beef’s presence to make 1 Char, normally costing 0.20 before scoring; Banked Embers can lower that cost."
+    },
+    {
+      "id": "pantry.onion",
+      "name": "Moon Onion",
+      "type": "Vegetable",
+      "rarity": "common",
+      "volume": 0.4,
+      "basePower": 120,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1,
+        "aromatic": 2
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.5
+        ],
+        [
+          40,
+          1
+        ],
+        [
+          70,
+          1.3
+        ],
+        [
+          100,
+          1.35
+        ],
+        [
+          120,
+          0.85
+        ]
+      ],
+      "residueId": "pantry.cool-coating",
+      "text": "Sugar pairs with Protein for Browning at 70–110°C or Acid for Preservation at 0–60°C. Aromatic 2 pairs with Fat for Infusion at 40–100°C."
+    },
+    {
+      "id": "pantry.butter",
+      "name": "Butter",
+      "type": "Dairy",
+      "rarity": "common",
+      "volume": 0.3,
+      "basePower": 100,
+      "reactivity": 1,
+      "properties": {
+        "fat": 2
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.2
+        ],
+        [
+          40,
+          0.8
+        ],
+        [
+          70,
+          1.35
+        ],
+        [
+          90,
+          1.5
+        ],
+        [
+          120,
+          0.45
+        ]
+      ],
+      "residueId": "pantry.cool-coating",
+      "text": "Fat 2 pairs with Aromatic for Infusion at 40–100°C. An Aromatic partner such as Moon Onion lets both ingredients gain reaction points."
+    },
+    {
+      "id": "pantry.lemon",
+      "name": "Sun Lemon",
+      "type": "Fruit",
+      "rarity": "common",
+      "volume": 0.35,
+      "basePower": 70,
+      "reactivity": 1.2,
+      "properties": {
+        "acid": 2,
+        "sugar": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          1.3
+        ],
+        [
+          40,
+          1.25
+        ],
+        [
+          70,
+          0.9
+        ],
+        [
+          100,
+          0.5
+        ],
+        [
+          120,
+          0.2
+        ]
+      ],
+      "residueId": "pantry.cool-coating",
+      "text": "Acid 2 pairs with Mineral for Extraction at 50–120°C; its own Sugar enables Preservation at 0–60°C. At 90°C+, Acid can harvest stored Culture even though Lemon’s hot base score is weak."
+    },
+    {
+      "id": "pantry.oyster",
+      "name": "Silver Oyster",
+      "type": "Mineral",
+      "rarity": "uncommon",
+      "volume": 0.45,
+      "basePower": 145,
+      "reactivity": 1.25,
+      "properties": {
+        "mineral": 2,
+        "protein": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.6
+        ],
+        [
+          50,
+          1
+        ],
+        [
+          80,
+          1.3
+        ],
+        [
+          110,
+          1.4
+        ],
+        [
+          120,
+          1
+        ]
+      ],
+      "residueId": "pantry.hearth-coating",
+      "text": "Mineral 2 pairs with Acid for Extraction at 50–120°C. Protein also pairs with Sugar for Browning at 70–110°C, or fuels a Hearth furnace at 90°C+, normally costing 0.20 presence."
+    },
+    {
+      "id": "pantry.salt",
+      "name": "Catalyst Salt",
+      "type": "Mineral",
+      "rarity": "uncommon",
+      "volume": 0.15,
+      "basePower": 10,
+      "reactivity": 3,
+      "properties": {
+        "mineral": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          1
+        ],
+        [
+          120,
+          1
+        ]
+      ],
+      "residueId": "pantry.hearth-coating",
+      "text": "Only 10 base power, but Mineral 1 with React ×3 contributes 3 effective Mineral while fully present. Pair it with Acid for Extraction at 50–120°C; its contribution fades with presence."
+    }
+  ]
+}

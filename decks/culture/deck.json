@@ -1,0 +1,373 @@
+{
+  "id": "culture",
+  "schemaVersion": 1,
+  "version": "0.3.0",
+  "name": "Culture Cellar",
+  "description": "Grow a live culture in the cool, then harvest it with heat and Acid.",
+  "color": "#628f72",
+  "pale": "#e7f4e7",
+  "symbol": "◌",
+  "openingIds": [
+    "culture.mother",
+    "culture.yeast"
+  ],
+  "residues": [
+    {
+      "id": "culture.seasoned-crock",
+      "name": "Seasoned Crock",
+      "text": "Each harvest spending at least 4 Culture returns 1 / 2 Culture. Smaller harvests do not refill it.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "harvestFour",
+        "target": 2,
+        "text": "Harvest at least 4 Culture twice."
+      }
+    },
+    {
+      "id": "culture.sugar-glaze",
+      "name": "Sugar Glaze",
+      "text": "Every valid growth gains 1 / 2 extra Culture. A full-six harvest scores ×1.5 / ×2.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "harvestSix",
+        "target": 1,
+        "text": "Harvest all 6 Culture in one bowl."
+      }
+    },
+    {
+      "id": "culture.living-lid",
+      "name": "Living Lid",
+      "text": "With at least 3 banked Culture, Preservation bonus points gain ×1.5 / ×2.25. Grow cool, then let the bank season your next bowl.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "cultureGrown",
+        "target": 8,
+        "text": "Grow 8 Culture while this residue is installed."
+      },
+      "imageId": "culture.seasoned-crock",
+      "symbol": "❧"
+    },
+    {
+      "id": "culture.last-drop",
+      "name": "The Last Drop",
+      "text": "A harvest with at least 2.5 effective Acid scores ×1.4 / ×1.8. Multiplies Sugar Glaze when both conditions hold.",
+      "maxTier": 2,
+      "objective": {
+        "metric": "strongHarvest",
+        "target": 2,
+        "text": "Twice harvest at least 4 Culture with 2.5+ effective Acid."
+      },
+      "imageId": "culture.sugar-glaze",
+      "symbol": "◆"
+    }
+  ],
+  "cards": [
+    {
+      "id": "culture.mother",
+      "name": "Mother Culture",
+      "type": "Fungus",
+      "rarity": "common",
+      "volume": 0.3,
+      "basePower": 35,
+      "reactivity": 1,
+      "properties": {
+        "aromatic": 1
+      },
+      "tags": [
+        "cultureSource"
+      ],
+      "temperature": [
+        [
+          0,
+          0.3
+        ],
+        [
+          40,
+          1
+        ],
+        [
+          60,
+          1.2
+        ],
+        [
+          90,
+          0.5
+        ],
+        [
+          120,
+          0.2
+        ]
+      ],
+      "residueId": "culture.seasoned-crock",
+      "text": "At 40–60°C, with at least 1 effective Sugar, the oldest live Culture source grows 1 Culture per serving (cap 6). Bubble Fig adds 1; Sugar Glaze adds its tier every growth. Build the bank, then harvest with Acid at 90°C+."
+    },
+    {
+      "id": "culture.yeast",
+      "name": "Wild Yeast",
+      "type": "Fungus",
+      "rarity": "common",
+      "volume": 0.25,
+      "basePower": 45,
+      "reactivity": 1,
+      "properties": {
+        "aromatic": 1
+      },
+      "tags": [
+        "cultureSource"
+      ],
+      "temperature": [
+        [
+          0,
+          0.4
+        ],
+        [
+          40,
+          1.1
+        ],
+        [
+          60,
+          1
+        ],
+        [
+          90,
+          0.4
+        ],
+        [
+          120,
+          0.2
+        ]
+      ],
+      "residueId": "culture.seasoned-crock",
+      "text": "A second Culture source: at 40–60°C and effective Sugar ≥1, it grows a base 1 Culture only if it is the oldest live source. Multiple sources do not stack; Bubble Fig or Sugar Glaze can boost growth before a 90°C+ Acid harvest."
+    },
+    {
+      "id": "culture.peel",
+      "name": "Orchard Peel",
+      "type": "Fruit",
+      "rarity": "common",
+      "volume": 0.35,
+      "basePower": 85,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 2,
+        "acid": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          1
+        ],
+        [
+          40,
+          1.3
+        ],
+        [
+          60,
+          1.2
+        ],
+        [
+          90,
+          0.8
+        ],
+        [
+          120,
+          0.3
+        ]
+      ],
+      "residueId": "culture.sugar-glaze",
+      "text": "Sugar 2 can feed Culture growth at 40–60°C. Acid 1 can harvest it at 90°C+, but this card loses base heat value as the pot gets hotter. Its Sugar also pairs with Protein for Browning or Acid for Preservation."
+    },
+    {
+      "id": "culture.plum",
+      "name": "Sour Plum",
+      "type": "Fruit",
+      "rarity": "common",
+      "volume": 0.4,
+      "basePower": 90,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1,
+        "acid": 2
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          1.1
+        ],
+        [
+          40,
+          1.2
+        ],
+        [
+          60,
+          1
+        ],
+        [
+          90,
+          0.8
+        ],
+        [
+          120,
+          0.3
+        ]
+      ],
+      "residueId": "culture.sugar-glaze",
+      "text": "Sugar 1 feeds Culture at 40–60°C; Acid 2 harvests at 90°C+. Harvest strength uses at most 3 effective Acid. Spending 4+ Culture activates Seasoned Crock; spending all 6 activates Sugar Glaze’s large harvest multiplier."
+    },
+    {
+      "id": "culture.candycap",
+      "name": "Candycap",
+      "type": "Fungus",
+      "rarity": "uncommon",
+      "volume": 0.3,
+      "basePower": 105,
+      "reactivity": 1.2,
+      "properties": {
+        "sugar": 2,
+        "aromatic": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.8
+        ],
+        [
+          40,
+          1.35
+        ],
+        [
+          60,
+          1.3
+        ],
+        [
+          90,
+          0.7
+        ],
+        [
+          120,
+          0.2
+        ]
+      ],
+      "residueId": "culture.sugar-glaze",
+      "text": "Sugar 2 feeds cool Culture growth; Aromatic pairs with Fat for Infusion at 40–100°C. Candycap has no Acid, so it cannot trigger a Culture harvest on its own."
+    },
+    {
+      "id": "culture.cream",
+      "name": "Cool Cream",
+      "type": "Dairy",
+      "rarity": "uncommon",
+      "volume": 0.3,
+      "basePower": 85,
+      "reactivity": 1,
+      "properties": {
+        "fat": 1
+      },
+      "tags": [
+        "cultureKeeper"
+      ],
+      "temperature": [
+        [
+          0,
+          0.5
+        ],
+        [
+          40,
+          1.1
+        ],
+        [
+          60,
+          1.4
+        ],
+        [
+          90,
+          0.8
+        ],
+        [
+          120,
+          0.2
+        ]
+      ],
+      "residueId": "culture.seasoned-crock",
+      "text": "At 40–60°C, the oldest live Culture source retains at least 96% after serving, allowing it to survive a long setup. Fat 1 also pairs with Aromatic for Infusion at 40–100°C; protection stops outside the cool band."
+    },
+    {
+      "id": "culture.ember",
+      "name": "Ember Root",
+      "type": "Vegetable",
+      "rarity": "uncommon",
+      "volume": 0.5,
+      "basePower": 185,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1
+      },
+      "tags": [],
+      "temperature": [
+        [
+          0,
+          0.2
+        ],
+        [
+          60,
+          0.6
+        ],
+        [
+          90,
+          1.5
+        ],
+        [
+          110,
+          1.65
+        ],
+        [
+          120,
+          1.1
+        ]
+      ],
+      "residueId": "culture.seasoned-crock",
+      "text": "High immediate score at 90–110°C helps when there is no time to build Culture. Its Sugar 1 can still feed growth at 40–60°C, but its own base score is poor at cool heat."
+    },
+    {
+      "id": "culture.fig",
+      "name": "Bubble Fig",
+      "type": "Fruit",
+      "rarity": "rare",
+      "volume": 0.3,
+      "basePower": 70,
+      "reactivity": 1,
+      "properties": {
+        "sugar": 1
+      },
+      "tags": [
+        "cultureBooster"
+      ],
+      "temperature": [
+        [
+          0,
+          0.6
+        ],
+        [
+          40,
+          1.2
+        ],
+        [
+          60,
+          1.2
+        ],
+        [
+          90,
+          0.7
+        ],
+        [
+          120,
+          0.3
+        ]
+      ],
+      "residueId": "culture.sugar-glaze",
+      "text": "At 40–60°C, if a live Culture source and Sugar ≥1 already allow growth, Bubble Fig adds 1 extra Culture (maximum 6). Copies do not stack; without a source it gives no growth."
+    }
+  ]
+}

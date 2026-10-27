@@ -1,0 +1,11 @@
+{
+  "name": "forever-stew",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/dev-server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --test tests/*.test.js"
+  }
+}

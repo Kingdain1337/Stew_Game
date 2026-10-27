@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="UTF-8" />
+<title>Forever Stew reaction playback smoke</title>
+<style>
+  #pot-interior { position:absolute; left:100px; top:200px; width:240px; height:140px; }
+  .pot-ingredient { position:absolute; width:40px; height:40px; }
+  #one { left:20px; top:30px; } #two { left:150px; top:60px; }
+  #fx-layer { position:fixed; inset:0; pointer-events:none; }
+  .score-card { position:absolute; left:100px; top:50px; }
+</style>
+<div class="score-card"><span id="total-score">0</span><div id="score-meter"></div></div>
+<div id="pot-visual"><div id="pot-interior"><div id="one" class="pot-ingredient" data-instance="i1" data-card-id="pantry.beef"></div><div id="two" class="pot-ingredient" data-instance="i2" data-card-id="pantry.onion"></div></div></div>
+<div id="performance-label"></div><div id="event-log"></div><div id="fx-layer"></div>
+<script type="module">
+  Element.prototype.animate = () => ({ finished: Promise.resolve() });
+  import { playEvents } from '../apps/play-web/presentation.js';
+  const catalog = { cards: { 'pantry.beef': { name: 'Beef' }, 'pantry.onion': { name: 'Moon Onion' } }, decks: {
+    pantry: { id: 'pantry', color: '#c87938', presentation: { labels: {}, accents: { pulse: '#e9a33a' }, eventText: () => null } },
+    chorus: { id: 'chorus', color: '#735aa0', presentation: { labels: {}, accents: { pulse: '#aa8ce2' }, eventText: (event) => event.type === 'reactionPulse' ? 'Echo rings' : null } }
+  } };
+  const events = [
+    { id: 'e1', type: 'baseScored', sourceId: 'pantry.beef', targetIds: ['i1'], data: { amount: 10 } },
+    { id: 'e2', type: 'baseScored', sourceId: 'pantry.onion', targetIds: ['i2'], data: { amount: 20 } },
+    { id: 'e3', type: 'reactionPulse', sourceId: 'core.browning', targetIds: ['i1', 'i2'], data: { origin: 'original', participantIds: ['i1', 'i2'], total: 10 } },
+    { id: 'e4', type: 'reactionPulse', sourceId: 'chorus.glass-noodle', targetIds: ['i1', 'i2'], parentIds: ['e3'], data: { origin: 'derived', participantIds: ['i1', 'i2'], total: 5 } },
+    { id: 'e5', type: 'scoreCalculated', sourceId: 'core.score', targetIds: ['i1', 'i2'], data: { total: 91.125 } }
+  ];
+  // Deliberately combine portion and request multipliers: every bubble must
+  // match the ledger, not just snap to the correct total at the end.
+  const explanation = { total: 91.125, details: [
+    { instanceId: 'i1', customer: 1, residueMultiplier: 1, servingMultiplier: 1.5, demandMultiplier: 1.35, contributions: [{ eventId: 'e1', amount: 10 }, { eventId: 'e3', amount: 5 }, { eventId: 'e4', amount: 2.5 }] },
+    { instanceId: 'i2', customer: 1, residueMultiplier: 1, servingMultiplier: 1.5, demandMultiplier: 1.35, contributions: [{ eventId: 'e2', amount: 20 }, { eventId: 'e3', amount: 5 }, { eventId: 'e4', amount: 2.5 }] }
+  ] };
+  const seenScores = [], seenLabels = [];
+  let connectorCount = 0;
+  const number = document.querySelector('#total-score'), label = document.querySelector('#performance-label'), layer = document.querySelector('#fx-layer');
+  new MutationObserver(() => seenScores.push(Number(number.textContent))).observe(number, { childList: true, characterData: true, subtree: true });
+  new MutationObserver(() => seenLabels.push(label.textContent)).observe(label, { childList: true, characterData: true, subtree: true });
+  new MutationObserver((records) => { for (const record of records) for (const node of record.addedNodes) if (node.classList?.contains('reaction-lines')) connectorCount++; }).observe(layer, { childList: true });
+  const keepAlive = setInterval(() => {}, 60);
+  await playEvents(events, { catalog, explanation, speed: 2, soundEnabled: false, getSkip: () => false, labelElement: label, layer, baseline: 0, target: 100 });
+  clearInterval(keepAlive);
+  const original = seenLabels.findIndex((text) => text.includes('browning reacts'));
+  const echo = seenLabels.findIndex((text) => text.includes('Echo rings'));
+  document.body.dataset.smokeResult = number.textContent === '91.1' && connectorCount === 2 && original >= 0 && echo > original && seenScores.includes(60.8) && seenScores.includes(81) ? 'pass' : 'reaction-failed';
+</script>
+</html>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forever Stew — Deck Experiments</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="apps/play-web/play.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">The royal kitchens present</p>
+          <h1>Forever Stew</h1>
+        </div>
+        <button id="new-game" class="quiet-button">New storyline</button>
+      </header>
+
+      <section id="welcome" class="welcome panel">
+        <div class="welcome-copy">
+          <p class="eyebrow">Three playable deck experiments</p>
+          <h2>Make one old pot worth remembering.</h2>
+          <p>Choose a story, pack your decks, and pick a vessel. Begin with a humble stock; decide how much to serve and what to save. Ten chapters, three arcs, and guests with very particular appetites. Residues grow through your cooking and reset with the next story.</p>
+          <p class="label">Choose your story</p><div id="story-choices" class="story-choices"></div>
+          <div class="legend"><span><i class="dot score"></i> base score</span><span><i class="dot reaction"></i> reaction</span><span><i class="dot residue"></i> residue</span></div>
+          <div class="deck-intro"><p class="label">Choose one or two decks</p><div id="deck-choices" class="deck-choices"></div></div>
+          <label class="seed-label" for="seed-input">Run seed <input id="seed-input" type="number" min="0" max="4294967295" step="1" /><span>Keep a seed to replay the same offers.</span></label>
+        </div>
+        <div class="pot-start"><p class="label">Choose your vessel · either pot, either story</p><div class="pot-choices" id="pot-choices"></div><button id="start-story" class="serve-button" type="button">Begin story</button></div>
+      </section>
+
+      <div id="game" hidden>
+        <section id="stage-review" class="panel stage-review" hidden aria-live="polite"></section>
+        <section class="panel reactions-panel chemistry-dock" id="chemistry-dock" aria-label="Pot properties and reactions">
+          <div class="chemistry-heading"><h2>Pot chemistry</h2><span class="muted">Current pot · reactions at planned heat</span></div>
+          <div id="property-totals" class="property-totals"></div>
+          <div id="reactions" class="reaction-list"></div>
+        </section>
+        <section class="status-grid">
+          <article class="customer-card panel" id="customer-card"></article>
+        </section>
+
+        <section class="game-grid">
+          <div class="left-column">
+            <section class="panel draft-panel">
+              <div class="section-heading"><div><p class="eyebrow">The pantry offers</p><h2>Choose one ingredient</h2></div><p class="muted">Add or pass. Not enough volume? Replace an ingredient.</p></div>
+              <div id="offers" class="offers"></div>
+              <details class="glossary"><summary>What do Power, React, Acid 2 and the other terms mean?</summary><div id="glossary-content" class="glossary-content"></div></details>
+            </section>
+            <section class="panel action-panel">
+              <fieldset class="serving-picker"><legend>Serving size</legend><div id="serving-sizes"></div></fieldset>
+              <div id="selection-summary" class="selection-summary">Choose an ingredient to add to the stew.</div>
+              <div class="actions"><button id="discard-button" class="quiet-button" disabled>Discard choice</button><button id="serve-button" class="serve-button" disabled>Serve 0.4 L</button></div>
+            </section>
+            <p id="preview-summary" class="preview-summary" aria-live="polite"></p>
+            <section class="panel performance-panel">
+              <div class="section-heading"><div><p class="eyebrow">The serving unfolds</p><h2>What caused what</h2></div><div class="performance-controls"><button id="sound-toggle" class="quiet-button" type="button" aria-pressed="false">Sound off</button><button id="speed-toggle" class="quiet-button" type="button">2× speed</button><button id="skip-effects" class="quiet-button" type="button">Skip</button></div></div>
+              <p id="performance-label" class="performance-label" aria-live="polite">Add an ingredient and serve to see its effects.</p>
+              <div id="event-log" class="event-log"></div>
+            </section>
+          </div>
+
+          <aside class="right-column">
+            <article class="score-card panel">
+              <p class="label">Feast progress</p>
+              <div id="audience" class="audience" aria-live="polite"></div>
+              <div class="score-line"><strong id="total-score">0</strong><span> / <span id="target-score">0</span></span></div>
+              <div class="meter"><div id="score-meter"></div></div>
+              <p id="round-status" class="muted"></p>
+              <p id="secured-hint" class="muted" hidden>Target secured. Use the remaining bowls to preserve ingredients, bank resources, or work on residue objectives for the next chapter.</p>
+              <p id="boss-turn" class="boss-turn"></p>
+            </article>
+            <section class="panel pot-panel">
+              <div class="section-heading"><div><p class="eyebrow">Your vessel</p><h2 id="pot-name">Iron Cauldron</h2></div><span id="capacity-badge" class="badge">3 L</span></div>
+              <div class="pot-stage">
+                <div id="pot-visual" class="pot-visual">
+                  <img id="pot-art" class="pot-art" alt="" />
+                  <div id="pot-interior" class="pot-interior" aria-hidden="true"></div>
+                  <div id="pot-bubbles" class="pot-bubbles" aria-hidden="true"></div>
+                  <div class="pot-rim-overlay" aria-hidden="true"></div>
+                  <div class="steam steam-a"></div><div class="steam steam-b"></div>
+                </div>
+                <article class="temperature-card">
+                  <p class="label">Heat</p><strong><span id="temperature">80</span>°C</strong>
+                  <span id="heat-note" class="heat-note">simmering</span>
+                  <div class="heat-control"><span>120°</span><input id="temperature-slider" aria-label="Cauldron temperature" type="range" min="0" max="120" step="5" value="80" /><span>0°</span></div>
+                </article>
+              </div>
+              <p id="pot-volume" class="muted centered"></p>
+              <p id="broth-note" class="muted centered"></p>
+              <div id="deck-meters" class="deck-meters"></div>
+              <div id="pot-contents" class="pot-contents"></div>
+            </section>
+            <section class="panel residue-panel">
+              <div class="section-heading"><div><p class="eyebrow">History in the iron</p><h2>Residues</h2></div><span id="residue-count" class="badge"></span></div>
+              <div id="residues" class="residue-list"></div>
+            </section>
+          </aside>
+        </section>
+        <section class="panel breakdown-panel">
+          <div class="section-heading"><div><p class="eyebrow">Last serving</p><h2>Score explanation</h2></div><span id="last-serving-total" class="last-total">—</span></div>
+          <div id="breakdown" class="breakdown empty">Your next serving will show every ingredient's contribution here.</div>
+        </section>
+      </div>
+    </main>
+
+    <dialog id="level-dialog" class="game-dialog"></dialog>
+    <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
+    <div id="tooltip-popover" class="tooltip-popover" role="tooltip" hidden></div>
+    <script type="module" src="apps/play-web/app.js"></script>
+  </body>
+</html>
