@@ -202,5 +202,38 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .residue-row.silenced .residue-icon { filter:grayscale(1); }
 .residue-row.silenced .residue-objective { color:#784480; font-weight:800; }
 .ability-cutoff { display:block; margin-top:5px; font-size:.72rem; }
+/* On phones, keep the guest and cauldron ahead of the draft, with a
+   swipeable offer row instead of three screenfuls of ingredient cards. */
+@media(max-width:900px) {
+  .game-grid { display:flex; flex-direction:column; }
+  .game-grid > .left-column, .game-grid > .right-column { display:contents; }
+  .game-grid .score-card { order:1; }
+  .game-grid .pot-panel { order:2; }
+  .game-grid .draft-panel { order:3; }
+  .game-grid .action-panel { order:4; }
+  .game-grid .preview-summary { order:5; }
+  .game-grid .performance-panel { order:6; }
+  .game-grid .residue-panel { order:7; }
+}
+@media(max-width:650px) {
+  .topbar { gap:12px; }
+  .topbar h1 { font-size:clamp(1.65rem,8vw,2.8rem); }
+  .topbar .quiet-button { flex-shrink:0; padding:10px; font-size:.75rem; }
+  .draft-panel,.pot-panel,.residue-panel,.breakdown-panel { padding:14px; }
+  .offers { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; gap:12px; padding:4px 4px 14px; }
+  .ingredient-card { flex:0 0 88%; min-width:0; scroll-snap-align:start; }
+  .ingredient-card .card-mechanic { font-size:.82rem; }
+  .ingredient-card .stat,.property-badge { font-size:.72rem; }
+  .quiet-button,.serve-button,.size-choice,.replace-choice,.glossary summary { min-height:44px; }
+  .glossary summary { display:flex; align-items:center; }
+  .heat-control input[type=range] { width:44px; }
+  .size-choice strong { font-size:.75rem; }
+  .size-choice small { font-size:.7rem; }
+  .dialog-inner,.chapter-card .dialog-inner { padding:20px; }
+  .dialog-inner h2 { font-size:1.65rem; }
+  .dialog-actions > button { flex:1 1 130px; }
+  .tooltip-popover { max-height:calc(100dvh - 16px); overflow-y:auto; pointer-events:auto; }
+  .pot-contents { max-height:220px; }
+}
 @media(max-width:900px) { .property-totals { grid-template-columns:repeat(3,minmax(0,1fr)); }.chemistry-dock .reaction-list { grid-template-columns:repeat(2,minmax(0,1fr)); }.chemistry-dock { height:260px; }.chemistry-dock .reaction-row { min-height:90px; } }
 @media(max-width:620px) { .story-choices,.stock-options { grid-template-columns:1fr; }.chapter-card { display:block; }.chapter-art { height:180px; min-height:0; object-position:50% 28%; }.customer-card { padding-right:20px; }.chapter-recap { position:static; margin-top:10px; }.chemistry-dock { top:0; padding:10px; max-height:32vh; }.chemistry-heading .muted { font-size:.63rem; }.property-total { padding:5px; font-size:.65rem; }.property-total strong { font-size:.8rem; }.size-choice { padding:7px; }.size-choice small { font-size:.6rem; }.dialog-actions { flex-wrap:wrap; } }

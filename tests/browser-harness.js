@@ -4,6 +4,12 @@ import { chooseAction } from '../tools/bot-policy.js';
 
 const frame = document.querySelector('#game');
 const testCase = document.body.dataset.testCase;
+const parameters = new URLSearchParams(location.search);
+const mobileWidth = Number(parameters.get('width'));
+if (mobileWidth) {
+  frame.style.width = `${mobileWidth}px`;
+  frame.style.height = `${Number(parameters.get('height')) || 740}px`;
+}
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const waitFor = (predicate) => new Promise((resolve, reject) => {
   let tries = 0;
@@ -20,6 +26,18 @@ try {
   const catalog = await loadCatalog();
   await waitFor(() => frame.contentDocument?.querySelector('[data-pot]'));
   const page = frame.contentDocument;
+  function checkMobile(label) {
+    if (!mobileWidth) return;
+    const viewport = frame.contentWindow;
+    assert(page.documentElement.scrollWidth <= viewport.innerWidth + 1, `${label}: horizontal page overflow`);
+    const dialog = page.querySelector('#level-dialog');
+    if (dialog.open) {
+      const rect = dialog.getBoundingClientRect();
+      assert(rect.left >= 0 && rect.right <= viewport.innerWidth + 1 && rect.top >= 0 && rect.bottom <= viewport.innerHeight + 1, `${label}: dialog outside viewport`);
+      assert(dialog.scrollWidth <= dialog.clientWidth + 1, `${label}: dialog horizontal overflow`);
+    }
+  }
+  checkMobile('Welcome');
   const errors = [];
   frame.contentWindow.addEventListener('error', (event) => errors.push(event.message));
   frame.contentWindow.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason)));
@@ -39,6 +57,7 @@ try {
   assert(!page.querySelector('#level-dialog').open, 'Pot/story selection started run early');
   page.querySelector('#start-story').click();
   await waitFor(() => page.querySelectorAll('[data-stock]').length === 3);
+  checkMobile('Stocks');
   assert(page.querySelector('#pot-volume').textContent.startsWith('0.00'), 'Starting pot not empty');
   assert(page.querySelector('#serve-button').disabled, 'Can serve before stock selection');
   const stockId = state.stockOffers[0];
@@ -46,6 +65,7 @@ try {
   page.querySelector(`[data-stock="${stockId}"]`).click();
   command({ type: 'chooseStock', stockId });
   await waitFor(() => page.querySelector('#chapter-begin'));
+  checkMobile('Chapter introduction');
   assert(page.querySelector('#level-dialog').textContent.includes('Chapter'), 'Missing chapter narrative');
   page.querySelector('#chapter-close').click();
   assert(!page.querySelector('#level-dialog').open && !page.querySelector('#stage-review').hidden, 'Chapter inspection traps player');
@@ -53,6 +73,20 @@ try {
   page.querySelector('#chapter-begin').click();
   command({ type: 'startChapter' });
   await waitFor(() => page.querySelector('[data-offer]'));
+  checkMobile('Cooking');
+  if (mobileWidth) {
+    const keyword = page.querySelector('#offers [data-tooltip]');
+    const firstOffer = keyword.closest('[data-offer]');
+    keyword.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, cancelable:true, pointerType:'touch' }));
+    keyword.dispatchEvent(new PointerEvent('click', { bubbles:true, cancelable:true, pointerType:'touch' }));
+    assert(!page.querySelector('#tooltip-popover').hidden && firstOffer.getAttribute('aria-pressed') === 'false', 'Touch keyword selected the card or failed to show its tooltip');
+    page.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, pointerType:'touch' }));
+    assert(page.querySelector('#tooltip-popover').hidden, 'Touch outside failed to dismiss tooltip');
+    const offers = page.querySelector('#offers');
+    offers.scrollLeft = offers.scrollWidth;
+    assert(offers.scrollLeft > 0, 'Mobile offer row cannot be swiped');
+    offers.scrollLeft = 0;
+  }
   assert(page.querySelectorAll('[data-serving-size]').length === 3, 'Missing sizes');
   assert(page.querySelectorAll('#property-totals .property-badge').length === 6 || page.querySelector('#property-totals').children.length === 6, 'Missing property totals');
   assert(page.querySelector('#residue-count').textContent.includes(`0/${POTS.find((pot) => pot.id === potId).residueSlots}`), 'Wrong residue slots');
@@ -75,6 +109,7 @@ try {
       (page.querySelector('#level-dialog').open || !page.querySelector('[data-offer]').disabled));
     await waitFor(() => page.querySelector('#total-score').textContent === Number(state.score).toLocaleString(undefined, { maximumFractionDigits: 1 }));
     assert(!errors.length, errors.join('; '));
+    checkMobile(`After bowl ${state.round}`);
     const actual = Number(page.querySelector('#pot-volume').textContent.match(/^[\d.]+/)?.[0]);
     const expected = state.contents.reduce((sum, entry) => sum + occupiedVolume(entry, catalog), 0);
     assert(Math.abs(actual - expected) < .011, 'Visible pot volume differs from rules');

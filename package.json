@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node tools/dev-server.js",
+    "build": "node tools/build-site.js",
+    "test:site": "node --test tests/static-site.check.js",
     "test": "node --test tests/*.test.js",
     "check": "node --test tests/*.test.js"
   }

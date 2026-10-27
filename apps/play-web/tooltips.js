@@ -1,5 +1,6 @@
 export function installTooltips(popover) {
   let anchor = null;
+  let touchKeyword = null;
 
   function place() {
     if (!anchor?.isConnected) { hide(); return; }
@@ -25,12 +26,33 @@ export function installTooltips(popover) {
   function hide() { anchor = null; popover.hidden = true; }
 
   document.addEventListener('pointerover', (event) => {
+    if (event.pointerType === 'touch') return;
     const element = event.target.closest?.('[data-tooltip]');
     if (element) show(element);
   });
   document.addEventListener('pointerout', (event) => {
+    if (event.pointerType === 'touch') return;
     if (anchor && !anchor.contains(event.relatedTarget)) hide();
   });
+  // Touch has no durable hover. Tapping a keyword toggles its explanation
+  // without also selecting/re-rendering the surrounding ingredient card.
+  document.addEventListener('pointerdown', (event) => {
+    touchKeyword = null;
+    if (event.pointerType !== 'touch') return;
+    const element = event.target.closest?.('[data-tooltip]');
+    if (element) {
+      touchKeyword = element;
+      if (anchor === element) hide(); else show(element);
+      event.preventDefault();
+    } else if (!popover.contains(event.target)) hide();
+  }, { capture: true, passive: false });
+  document.addEventListener('click', (event) => {
+    if (touchKeyword?.contains(event.target)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    touchKeyword = null;
+  }, true);
   document.addEventListener('focusin', (event) => {
     const element = event.target.closest?.('[data-tooltip]');
     if (element) show(element);
