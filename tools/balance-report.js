@@ -14,7 +14,7 @@ const encounters = getStory({ storyId }).chapters;
 const targetArgument = process.argv[3] ?? '1';
 if (targetArgument.includes(',')) {
   const targets = targetArgument.split(',').map(Number);
-  if (targets.length !== encounters.length || targets.some((target) => !Number.isInteger(target) || target <= 0)) throw new Error('Give ten positive integer targets');
+  if (targets.length !== encounters.length || targets.some((target) => !Number.isInteger(target) || target <= 0)) throw new Error(`Give ${encounters.length} positive integer targets`);
   encounters.forEach((encounter, index) => { encounter.target = targets[index]; });
 } else {
   const scale = Number(targetArgument);

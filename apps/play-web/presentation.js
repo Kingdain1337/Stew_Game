@@ -21,12 +21,14 @@ export function describeEvent(event, catalog) {
   if (event.type === 'brothEnriched') return `Broth gathers ${event.data.added.toFixed(2)} L of remnants`;
   if (event.type === 'presenceConsumed') return `${cardNameForSource(event.sourceId, catalog)} spends ${event.data.amount.toFixed(2)} presence`;
   if (event.type === 'retentionRequested') return `${cardNameForSource(event.sourceId, catalog)} protects an ingredient (×${event.data.fraction.toFixed(2)} retained)`;
-  if (event.type === 'residueLeveled') return `${catalog.residues[event.sourceId]?.name ?? event.sourceId} reached level 2 — objective completed!`;
+  if (event.type === 'residueLeveled') return `${catalog.residues[event.sourceId]?.name ?? event.sourceId} reached level ${event.data.tier} — objective completed!`;
+  if (event.type === 'residueBonusScored') return `${catalog.residues[event.sourceId]?.name ?? event.sourceId} adds +${event.data.amount.toFixed(1)} points to ${catalog.cards[event.data.cardId]?.name ?? 'this ingredient'} at level ${event.data.level}`;
   if (event.type === 'servingSizeChosen') return `${event.data.name} bowl · ${event.data.volume} L serving fraction · ×${event.data.multiplier} base portion multiplier`;
   if (event.type === 'resourceChanged') return `${cardNameForSource(event.sourceId, catalog)}: ${event.data.resource} ${event.data.delta > 0 ? '+' : ''}${event.data.delta}`;
   if (event.type === 'baseScored') return `${cardNameForSource(event.sourceId, catalog)} adds its base score`;
   if (event.type === 'reactionPulse') return `${cardNameForSource(event.sourceId, catalog)} ${event.data.origin === 'derived' ? 'echoes' : 'reacts'} for +${event.data.total.toFixed(1)}`;
   if (event.type === 'scoreCalculated') return `Serving scores ${event.data.total.toFixed(1)} points`;
+  if (event.type === 'bossVarietyProgress') return `Bandit supper: ${event.data.after}/${event.data.target} ingredient types served`;
   return event.type.replace(/([A-Z])/g, ' $1').toLowerCase();
 }
 
@@ -64,9 +66,10 @@ function participants(event) {
 function pulseColor(event, deck) { return REACTION_COLORS[event.sourceId] ?? deck.presentation.accents?.pulse ?? deck.color; }
 
 function scoreParts(event, explanation) {
+  if (event.type === 'residueBonusScored') return [{ instanceId: event.targetIds[0], amount: event.data.amount }];
   return explanation.details.flatMap((detail) => detail.contributions
     .filter((part) => part.eventId === event.id && part.amount > 0)
-    .map((part) => ({ instanceId: detail.instanceId, amount: part.amount * detail.customer * detail.residueMultiplier * (detail.servingMultiplier ?? 1) * (detail.demandMultiplier ?? 1) })));
+    .map((part) => ({ instanceId: detail.instanceId, amount: part.amount * detail.customer * (detail.servingMultiplier ?? 1) * (detail.demandMultiplier ?? 1) })));
 }
 
 function setScore(value, target, color) {
@@ -154,8 +157,8 @@ async function floatPoints(layer, origin, amount, color, duration, onAppear) {
   try {
     await token.animate([
       { transform: 'translate(-50%, 0) scale(.55)', opacity: 0 },
-      { transform: 'translate(-50%, -28px) scale(1.14)', opacity: 1, offset: .3 },
-      { transform: 'translate(calc(-50% + 16px), -105px) scale(.92)', opacity: 0 }
+      { transform: 'translate(-50%, -36px) scale(1.14)', opacity: 1, offset: .3 },
+      { transform: 'translate(calc(-50% + 16px), -137px) scale(.92)', opacity: 0 }
     ], { duration, easing: 'ease-out', fill: 'forwards' }).finished;
   } finally {
     clearTimeout(timer);
@@ -165,7 +168,7 @@ async function floatPoints(layer, origin, amount, color, duration, onAppear) {
 }
 
 export async function playEvents(events, { catalog, explanation, speed, soundEnabled, getSkip, labelElement, layer, baseline, target, onReaction = () => {}, onScore = () => {} }) {
-  const salient = events.filter((event) => ['servingSizeChosen', 'ingredientAdded', 'ingredientRemoved', 'ingredientDissolved', 'brothEnriched', 'presenceConsumed', 'resourceChanged', 'retentionRequested', 'baseScored', 'reactionPulse', 'scoreCalculated', 'residueLeveled'].includes(event.type));
+  const salient = events.filter((event) => ['servingSizeChosen', 'ingredientAdded', 'ingredientRemoved', 'ingredientDissolved', 'brothEnriched', 'presenceConsumed', 'resourceChanged', 'retentionRequested', 'baseScored', 'reactionPulse', 'residueBonusScored', 'scoreCalculated', 'residueLeveled'].includes(event.type));
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let displayed = baseline;
   setScore(displayed, target);
@@ -192,7 +195,7 @@ export async function playEvents(events, { catalog, explanation, speed, soundEna
       for (const part of parts) {
         const increment = () => { displayed += part.amount; setScore(displayed, target, color); onScore(displayed); };
         if (reducedMotion || getSkip()) increment();
-        else await floatPoints(layer, iconFor(part.instanceId), part.amount, color, Math.round(560 / speed), increment);
+        else await floatPoints(layer, iconFor(part.instanceId), part.amount, color, Math.round(820 / speed), increment);
       }
     } else if (!reducedMotion && event.type !== 'scoreCalculated') await sleep(Math.round(75 / speed));
     logLine?.classList.remove('current');

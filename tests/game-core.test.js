@@ -331,7 +331,7 @@ test('Iron fills seven slots and replaces only the explicitly selected residue',
 test('banked Char amplifies Browning; capped burns still pay Overflow without Dumplings', () => {
   const state = fixture(['pantry', 'hearth'], [['hearth.smokeleaf', 1], ['hearth.marrow', 1], ['hearth.pear', 1]]);
   state.deckState.hearth.resources.char = 6;
-  state.residues = [{ id: 'hearth.banked-embers', tier: 2 }];
+  state.residues = [{ id: 'hearth.banked-embers', tier: 5 }];
   const result = serve(state, 95);
   assert.equal(result.state.deckState.hearth.resources.char, 6);
   assert.equal(pulses(result, 'hearth.overflow')[0].data.total, 450);
@@ -350,7 +350,7 @@ test('banked Char amplifies Browning; capped burns still pay Overflow without Du
 test('Blaze needs three Char, fires exactly at 110 degrees, and does not need a furnace or Dumplings', () => {
   const state = fixture(['pantry', 'hearth'], [['hearth.truffle', 1]]);
   state.deckState.hearth.resources.char = 6;
-  state.residues = [{ id: 'hearth.coal-keeper', tier: 2 }];
+  state.residues = [{ id: 'hearth.coal-keeper', tier: 3 }];
   assert.equal(pulses(serve(state, 105), 'hearth.blaze').length, 0);
   const hot = serve(state, 110);
   assert.equal(pulses(hot, 'hearth.blaze')[0].data.total, 960);
@@ -371,7 +371,7 @@ test('full-six Culture harvest earns the large Glaze multiplier and every valid 
   assert.equal(first.state.deckState.culture.resources.culture, 2);
   assert.equal(serve(first.state, 50).state.deckState.culture.resources.culture, 4);
   const hot = fixture(['pantry', 'culture'], [['culture.plum', 1]]);
-  hot.residues = [{ id: 'culture.sugar-glaze', tier: 2 }, { id: 'culture.seasoned-crock', tier: 2 }];
+  hot.residues = [{ id: 'culture.sugar-glaze', tier: 3 }, { id: 'culture.seasoned-crock', tier: 3 }];
   hot.deckState.culture.resources.culture = 6;
   const harvest = serve(hot, 95);
   assert.equal(pulses(harvest, 'culture.harvest')[0].data.total, 720);
@@ -411,7 +411,7 @@ test('Crescendo requires Browning before Extraction; a leading Citrus disables i
 
 test('Silver Note rewards three distinct positive chemistry reactions, and Tuned Rim discounts every echo', () => {
   const state = fixture(['pantry', 'chorus'], [['pantry.beef', 1], ['pantry.onion', 1], ['chorus.glass-noodle', 1], ['chorus.cream', 1], ['chorus.citrus', 1], ['chorus.gel', 1]]);
-  state.residues = [{ id: 'chorus.silver-note', tier: 2 }, { id: 'chorus.tuned-rim', tier: 2 }];
+  state.residues = [{ id: 'chorus.silver-note', tier: 3 }, { id: 'chorus.tuned-rim', tier: 8 }];
   const result = serve(state, 80);
   const opener = result.events.find((event) => event.type === 'reactionPulse');
   assert.ok(Math.abs(pulses(result, 'chorus.glass-noodle')[0].data.total - opener.data.total * 3.25) < 1e-8);
@@ -425,7 +425,7 @@ test('Silver Note rewards three distinct positive chemistry reactions, and Tuned
 test('Pantry residues amplify named reactions without heat tax and the echo copies that amplification', () => {
   const state = fixture(['pantry', 'chorus'], [['pantry.beef', 1], ['pantry.onion', 1], ['chorus.glass-noodle', 1]]);
   const normal = serve(state, 80);
-  state.residues = [{ id: 'pantry.hearth-coating', tier: 2 }];
+  state.residues = [{ id: 'pantry.hearth-coating', tier: 5 }];
   const boosted = serve(state, 80);
   assert.equal(pulses(boosted, 'core.browning')[0].data.total, pulses(normal, 'core.browning')[0].data.total * 2);
   assert.equal(pulses(boosted, 'chorus.glass-noodle')[0].data.total, pulses(normal, 'chorus.glass-noodle')[0].data.total * 2);

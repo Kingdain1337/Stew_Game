@@ -18,6 +18,8 @@ export function installTooltips(popover) {
   function show(element) {
     if (anchor === element) return;
     anchor = element;
+    const modal = element.closest('dialog[open]');
+    (modal ?? document.body).append(popover);
     popover.textContent = element.dataset.tooltip;
     popover.hidden = false;
     place();

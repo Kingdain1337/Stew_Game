@@ -12,11 +12,15 @@
     "hearth.soot-pepper"
   ],
   "residues": [
+    { "id": "hearth.meat-drippings", "name": "Meat Drippings", "text": "Meat points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Meat", "perLevel": 0.02 }, "objective": { "metric": "meat", "target": 2, "text": "Score Meat in 2 bowls." }, "imageId": "hearth.banked-embers", "symbol": "+" },
+    { "id": "hearth.warm-ash", "name": "Warm Ash", "text": "Points at 90°C or above +1.5% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "heat", "min": 90, "perLevel": 0.015 }, "objective": { "metric": "hot", "target": 3, "text": "Serve 3 hot bowls (90°C or above)." }, "imageId": "hearth.banked-embers", "symbol": "+" },
+    { "id": "hearth.pepper-flake", "name": "Pepper Flake", "text": "Spice points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Spice", "perLevel": 0.02 }, "objective": { "metric": "spice", "target": 2, "text": "Score a Spice in 2 bowls." }, "imageId": "hearth.banked-embers", "symbol": "+" },
+    { "id": "hearth.hot-plate", "name": "Hot Plate", "text": "Hot-bowl points +2.5% per level.", "rarity": "uncommon", "maxTier": 8, "effect": { "kind": "heat", "min": 90, "perLevel": 0.025 }, "objective": { "metric": "hotBrowning", "target": 3, "text": "Score Browning at 90°C or above in 3 bowls." }, "imageId": "hearth.banked-embers", "symbol": "+" },
     {
       "id": "hearth.banked-embers",
       "name": "Banked Embers",
-      "text": "Every furnace burn costs 0.15 / 0.10 presence instead of 0.20. Overflow points gain ×1.75 / ×2.5.",
-      "maxTier": 2,
+      "text": "Furnace cost falls from 0.15 to 0.10 presence; Overflow scales from ×1.75 to ×2.5 across levels 1–5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "burns",
         "target": 6,
@@ -26,8 +30,8 @@
     {
       "id": "hearth.coal-keeper",
       "name": "Coal Keeper",
-      "text": "Begin each new chapter with +2 / +4 Char, capped at 6. Full-six Blaze points gain ×1.5 / ×2.",
-      "maxTier": 2,
+      "text": "Begin chapters with 2–4 Char; full-six Blaze scales from ×1.5 to ×2 across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "fullBlaze",
         "target": 1,
@@ -37,8 +41,8 @@
     {
       "id": "hearth.red-glaze",
       "name": "Red Glaze",
-      "text": "With 3+ banked Char, Browning bonus points gain ×1.5 / ×2. This multiplies the furnace’s banked-Char boost.",
-      "maxTier": 2,
+      "text": "At 3+ Char, Browning scales from ×1.5 to ×2 across levels 1–5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "hotBrowning",
         "target": 4,
@@ -50,8 +54,8 @@
     {
       "id": "hearth.ash-memory",
       "name": "Ash Memory",
-      "text": "Every Blaze returns 1 / 2 Char immediately after spending the bank. Returned Char can strengthen this bowl’s Browning with a furnace.",
-      "maxTier": 2,
+      "text": "Blaze returns 1–2 Char across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "charSpent",
         "target": 10,

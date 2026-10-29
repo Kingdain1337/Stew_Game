@@ -1,4 +1,4 @@
-import { effectiveProperty, oldest, propertyParticipants, residueTier, withTag } from '../../packages/deck-contract/helpers.js';
+import { effectiveProperty, oldest, propertyParticipants, residuePower, withTag } from '../../packages/deck-contract/helpers.js';
 
 export const resourceCaps = { culture: 6 };
 
@@ -10,7 +10,7 @@ function preServe({ state, cards }) {
     const source = oldest(withTag(state, { cards }, 'cultureSource'));
     if (source && effectiveProperty(state, { cards }, 'sugar') >= 1 && resource < 6) {
       const booster = withTag(state, { cards }, 'cultureBooster').length ? 1 : 0;
-      const glazeTier = residueTier(state, 'culture.sugar-glaze');
+      const glazeTier = residuePower(state, 'culture.sugar-glaze', 3);
       const amount = Math.min(6 - resource, 1 + booster + glazeTier);
       intents.push({ kind: 'resource', sourceId: source.cardId, targetIds: [source.instanceId], resource: 'culture', amount, label: 'Culture grows in the cool' });
     }
@@ -21,8 +21,8 @@ function preServe({ state, cards }) {
     const acid = effectiveProperty(state, { cards }, 'acid');
     if (acid > 0) {
       const participants = propertyParticipants(state, { cards }, 'acid');
-      const dropTier = residueTier(state, 'culture.last-drop');
-      const total = 30 * resource * Math.min(acid, 3) * (resource === 6 ? 1 + .5 * residueTier(state, 'culture.sugar-glaze') : 1) * (acid >= 2.5 ? 1 + .4 * dropTier : 1);
+      const dropTier = residuePower(state, 'culture.last-drop', 3);
+      const total = 30 * resource * Math.min(acid, 3) * (resource === 6 ? 1 + .5 * residuePower(state, 'culture.sugar-glaze', 3) : 1) * (acid >= 2.5 ? 1 + .4 * dropTier : 1);
       intents.push({ kind: 'resource', sourceId: 'culture.harvest', resource: 'culture', amount: -resource, label: 'Culture spent in harvest' });
       intents.push({
         kind: 'pulse', sourceId: 'culture.harvest', origin: 'original', echoable: true,
@@ -31,7 +31,7 @@ function preServe({ state, cards }) {
           amount: total * (cards[entry.cardId].properties.acid * cards[entry.cardId].reactivity * entry.presence / acid)
         }))
       });
-      const tier = residueTier(state, 'culture.seasoned-crock');
+      const tier = residuePower(state, 'culture.seasoned-crock', 3);
       if (tier && resource >= 4) {
         intents.push({ kind: 'resource', sourceId: 'culture.seasoned-crock', resource: 'culture', amount: tier, label: 'Seasoned Crock retains a culture' });
       }
@@ -43,7 +43,7 @@ function preServe({ state, cards }) {
 export const handlers = { preServe };
 
 export function reactionPlan({ state }) {
-  const tier = residueTier(state, 'culture.living-lid');
+  const tier = residuePower(state, 'culture.living-lid', 5);
   return tier && (state.deckState.culture.resources.culture ?? 0) >= 3
-    ? [{ kind: 'amplify', sourceId: 'culture.living-lid', reactionId: 'core.preservation', factor: tier === 1 ? 1.5 : 2.25 }] : [];
+    ? [{ kind: 'amplify', sourceId: 'culture.living-lid', reactionId: 'core.preservation', factor: .75 + .75 * tier }] : [];
 }

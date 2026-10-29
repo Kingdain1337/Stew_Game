@@ -1,5 +1,5 @@
 import { loadCatalog } from '../../decks/catalog.js';
-import { BROTH_CARD_ID, activeDeckIds, POTS, STORIES, SERVING_SIZES, getStory, getEncounter, availableResidues, createGame, encounterTarget, inspectReactions, occupiedVolume, preview, step } from '../../packages/game-core/index.js';
+import { BROTH_CARD_ID, activeDeckIds, POTS, STORIES, SERVING_SIZES, getStory, getEncounter, availableResidues, createGame, encounterTarget, starThresholds, inspectReactions, occupiedVolume, preview, step } from '../../packages/game-core/index.js';
 import { effectiveProperty } from '../../packages/deck-contract/helpers.js';
 import { audienceReaction, bossDemandText } from '../../stories/catalog.js';
 import { playEvents, describeEvent } from './presentation.js';
@@ -33,24 +33,22 @@ function contentVolume() { return state.contents.reduce((sum, entry) => sum + oc
 
 function renderWelcome() {
   if (!$('#seed-input').value) $('#seed-input').value = String(Date.now() >>> 0);
-  $('#story-choices').innerHTML = STORIES.map((story) => `<button type="button" class="story-choice ${story.id === selectedStory ? 'selected' : ''}" data-story="${story.id}" aria-pressed="${story.id === selectedStory}"><strong>${escapeHtml(story.name)}</strong><small>${escapeHtml(story.description)}</small><span>3 arcs · 10 chapters · 3 bosses</span></button>`).join('');
-  $('#deck-choices').innerHTML = ['culture', 'hearth', 'chorus'].map((id) => {
+  $('#story-choices').innerHTML = STORIES.map((story) => `<button type="button" class="story-choice ${story.id === selectedStory ? 'selected' : ''}" data-story="${story.id}" aria-pressed="${story.id === selectedStory}"><strong>${escapeHtml(story.name)}</strong><small>${escapeHtml(story.description)}</small><span>${story.arcs.length} arcs · ${story.chapters.length} chapters · ${story.chapters.filter((entry) => entry.boss).length} bosses</span></button>`).join('');
+  const story = STORIES.find((entry) => entry.id === selectedStory);
+  $('#deck-choices').innerHTML = [story.signatureDeckId, ...story.recommendedDeckIds].map((id, index) => {
     const deck = catalog.decks[id];
-    return `<button type="button" class="deck-choice ${selectedDecks.includes(id) ? 'selected' : ''}" data-deck="${id}" style="--deck-color:${deck.color};--deck-pale:${deck.pale}" aria-pressed="${selectedDecks.includes(id)}"><span class="deck-symbol">${deck.symbol}</span><strong>${escapeHtml(deck.name)}</strong><small>${escapeHtml(deck.description)}</small></button>`;
+    return `<button type="button" class="deck-choice ${selectedDecks.includes(id) ? 'selected' : ''}" data-deck="${id}" style="--deck-color:${deck.color};--deck-pale:${deck.pale}" aria-pressed="${selectedDecks.includes(id)}"><span class="deck-symbol">${deck.symbol}</span><strong>${escapeHtml(deck.name)}</strong><span class="deck-role">${index === 0 ? 'Story deck' : 'Recommended alternative'}</span><small>${escapeHtml(deck.description)}</small></button>`;
   }).join('');
   $('#pot-choices').innerHTML = POTS.map((pot) => `<button type="button" class="pot-choice ${pot.id === selectedPot ? 'selected' : ''}" data-pot="${pot.id}" aria-pressed="${pot.id === selectedPot}"><img src="assets/pots/${pot.id}.png" alt="" loading="lazy"><strong>${escapeHtml(pot.name)}</strong><span>${pot.capacity} L ingredient capacity · ${pot.residueSlots} residue slots</span><small>${escapeHtml(pot.text)}</small></button>`).join('');
   document.querySelectorAll('[data-deck]').forEach((button) => button.addEventListener('click', () => {
     const id = button.dataset.deck;
-    if (selectedDecks.includes(id)) {
-      if (selectedDecks.length > 1) selectedDecks = selectedDecks.filter((deckId) => deckId !== id);
-    } else if (selectedDecks.length < 2) selectedDecks = [...selectedDecks, id];
-    else selectedDecks = [selectedDecks[1], id];
+    selectedDecks = [id];
     const previousSeed = $('#seed-input').value;
     renderWelcome();
     $('#seed-input').value = previousSeed;
   }));
   document.querySelectorAll('[data-pot]').forEach((button) => button.addEventListener('click', () => { selectedPot = button.dataset.pot; renderWelcome(); }));
-  document.querySelectorAll('[data-story]').forEach((button) => button.addEventListener('click', () => { selectedStory = button.dataset.story; renderWelcome(); }));
+  document.querySelectorAll('[data-story]').forEach((button) => button.addEventListener('click', () => { selectedStory = button.dataset.story; selectedDecks = [STORIES.find((entry) => entry.id === selectedStory).signatureDeckId]; renderWelcome(); }));
 }
 
 function startGame() {
@@ -75,17 +73,29 @@ function renderStatus() {
   const story = getStory(state);
   const pot = POTS.find((entry) => entry.id === state.potId);
   const target = encounterTarget(state);
-  $('#customer-card').innerHTML = `<p class="eyebrow">${escapeHtml(story.name)} · Arc ${encounter.arc + 1}: ${escapeHtml(story.arcs[encounter.arc])} · Chapter ${encounter.chapter}/10 ${encounter.boss ? '· BOSS' : ''}</p><h2>${escapeHtml(encounter.name)}</h2><p class="customer-modifier">${escapeHtml(encounter.text)}</p><small>${encounter.servings - state.round} bowls remain · ${escapeHtml(bossDemandText(encounter))}</small><button type="button" class="quiet-button chapter-recap" id="chapter-recap">Read chapter</button>`;
+  $('#customer-card').innerHTML = `<p class="eyebrow">${escapeHtml(story.name)} · Arc ${encounter.arc + 1}: ${escapeHtml(story.arcs[encounter.arc])} · Chapter ${encounter.chapter}/${story.chapters.length} ${encounter.boss ? '· BOSS' : ''}</p><h2>${escapeHtml(encounter.name)}</h2><p class="customer-modifier">${escapeHtml(encounter.text)}</p><small>${encounter.servings - state.round} bowls remain · ${escapeHtml(bossDemandText(encounter))}</small><button type="button" class="quiet-button chapter-recap" id="chapter-recap">Read chapter</button>`;
   $('#chapter-recap').disabled = busy;
   $('#chapter-recap').addEventListener('click', () => showChapterCard(true));
   $('#total-score').textContent = format(state.score);
   $('#target-score').textContent = format(target);
-  $('#score-meter').style.width = `${Math.min(100, 100 * state.score / target)}%`;
+  const [, skilled, engine] = starThresholds(encounter);
+  $('#score-meter').style.width = `${Math.min(100, 100 * state.score / engine)}%`;
+  let starGoals = $('#star-goals');
+  if (!starGoals) {
+    starGoals = document.createElement('div');
+    starGoals.id = 'star-goals';
+    starGoals.className = 'star-goals';
+    $('#score-meter').parentElement.insertAdjacentElement('afterend', starGoals);
+  }
+  const sources = state.encounterPulseSources?.length ?? 0;
+  const bossReady = !encounter.boss?.requiredTypes || state.encounterTypes.length >= encounter.boss.requiredTypes;
+  starGoals.innerHTML = `<span class="${state.score >= target && bossReady ? 'reached' : ''}">★ ${format(target)} pass</span><span class="${state.score >= skilled && sources >= 1 && bossReady ? 'reached' : ''}">★★ ${format(skilled)} + 1 reaction</span><span class="${state.score >= engine && state.encounterMaxConcurrentSources >= 2 && bossReady ? 'reached' : ''}">★★★ ${format(engine)} + 2 in one bowl</span>`;
   $('#round-status').textContent = state.phase === 'serving' ? `Serving ${state.round + 1} of ${encounter.servings} · ${state.deckIds.filter((id) => id !== 'pantry').map((id) => catalog.decks[id].name).join(' + ')}` : `Encounter ${state.phase}`;
-  $('#secured-hint').hidden = state.phase !== 'serving' || state.score < target;
+  $('#secured-hint').hidden = state.phase !== 'serving' || state.score < target || (encounter.boss?.requiredTypes && state.encounterTypes.length < encounter.boss.requiredTypes);
   renderAudience(state.score);
   const conditions = [];
   if (encounter.boss?.requiredSize) conditions.push(`Only ${encounter.boss.requiredSize} bowls.`);
+  if (encounter.boss?.requiredTypes) conditions.push(`Bandit variety: ${state.encounterTypes.length}/${encounter.boss.requiredTypes} ingredient types.`);
   if (state.bossTurn.forcedHeat !== null) conditions.push(`Dragon's flame: ${state.bossTurn.forcedHeat}°C locked this bowl.`);
   if (state.bossTurn.giftCardId) conditions.push(`Royal request: add ${catalog.cards[state.bossTurn.giftCardId].name} for ×1.35 bowl points.`);
   if (state.disabledResidueIds.length) conditions.push(`Silenced this bowl: ${state.disabledResidueIds.map((id) => catalog.residues[id].name).join(', ')}. No effect or objective progress.`);
@@ -110,11 +120,28 @@ function renderAudience(score) {
   const panel = $('#audience');
   if (panel.dataset.chapter !== encounter.id) {
     panel.dataset.chapter = encounter.id;
-    panel.innerHTML = `<img class="audience-portrait" src="assets/characters/${encounter.portrait}.png" alt="${escapeHtml(encounter.name)}"><div><strong class="audience-mood"></strong><p class="audience-dialogue"></p><span class="audience-progress"></span></div>`;
+    panel.innerHTML = `<img class="audience-portrait" src="assets/characters/${encounter.portrait}.png" alt="${escapeHtml(encounter.name)}"><div><strong class="audience-mood"></strong><span class="audience-progress"></span></div>`;
+    panel.dataset.lastScore = '0';
+    panel.dataset.lastSpeech = '0';
+    panel.dataset.speechIndex = '0';
   }
+  const lastScore = Number(panel.dataset.lastScore);
+  const lastSpeech = Number(panel.dataset.lastSpeech);
+  const oldLevel = Number(panel.dataset.level ?? 0);
+  if (score > lastScore && (response.level > oldLevel || score - lastSpeech >= Math.max(35, encounterTarget(state) * .14))) {
+    const phrases = response.lines;
+    const index = Number(panel.dataset.speechIndex);
+    const bubble = document.createElement('span');
+    bubble.className = 'audience-speech';
+    bubble.textContent = phrases[index % phrases.length];
+    bubble.addEventListener('animationend', () => bubble.remove(), { once: true });
+    panel.append(bubble);
+    panel.dataset.speechIndex = String(index + 1);
+    panel.dataset.lastSpeech = String(score);
+  }
+  panel.dataset.lastScore = String(score);
   panel.dataset.level = response.level;
   panel.querySelector('.audience-mood').textContent = response.mood;
-  panel.querySelector('.audience-dialogue').textContent = response.line;
   panel.querySelector('.audience-progress').textContent = `${response.label}: ${Math.round(response.fraction * 100)}%`;
 }
 
@@ -123,7 +150,7 @@ function renderOffers() {
     const card = catalog.cards[id];
     const deck = deckOfCard(card);
     const properties = Object.entries(card.properties).map(([property, value]) => propertyBadge(property, value, card.reactivity)).join('');
-    return `<button type="button" class="ingredient-card rarity-${card.rarity} ${selectedOffer === id ? 'selected' : ''}" data-offer="${escapeHtml(id)}" style="--ingredient:${deck.color};--deck-pale:${deck.pale}" aria-pressed="${selectedOffer === id}"><img class="card-art" src="assets/ingredients/${encodeURIComponent(card.imageId ?? card.id)}.png" alt="" loading="lazy"><span class="rarity">${keyword('Rarity')} ${escapeHtml(card.rarity)} · ${escapeHtml(deck.name)} · ${keyword('Type')} ${escapeHtml(card.type)}</span><h3>${escapeHtml(card.name)}</h3>${id === state.bossTurn.giftCardId ? '<span class="royal-request">Royal request · add for ×1.35 bowl</span>' : ''}<div class="stat-row"><span class="stat">${keyword('Power')} ${card.basePower}</span><span class="stat">${keyword('Volume')} ${card.volume} L</span><span class="stat">${keyword('React')} ×${card.reactivity}</span></div><div class="property-row">${properties}</div><p class="card-mechanic">${highlightKeywords(card.text)}${card.tags.length ? ` <span class="ability-cutoff">${keyword('Operational')}: ≥0.25 presence.</span>` : ''}</p>${heatSummary(card, plannedTemperature)}</button>`;
+    return `<button type="button" class="ingredient-card rarity-${card.rarity} ${selectedOffer === id ? 'selected' : ''}" data-offer="${escapeHtml(id)}" style="--ingredient:${deck.color};--deck-pale:${deck.pale}" aria-pressed="${selectedOffer === id}"><img class="card-art" src="assets/ingredients/${encodeURIComponent(card.imageId ?? card.id)}.png" alt="" loading="lazy"><span class="rarity">${keyword('Rarity')} ${escapeHtml(card.rarity)} · ${escapeHtml(deck.name)} · ${keyword('Type')} ${escapeHtml(card.type)}</span><h3>${escapeHtml(card.name)}</h3>${id === state.bossTurn.giftCardId ? '<span class="royal-request">Royal request · add for ×1.35 bowl</span>' : ''}<div class="stat-row"><span class="stat">${keyword('Power')} ${card.basePower}</span><span class="stat">${keyword('Volume')} ${card.volume} L</span><span class="stat">${keyword('React')} ×${card.reactivity}</span></div><div class="property-row">${properties}</div><p class="card-mechanic">${highlightKeywords(card.text)}</p><span class="card-detail keyword" data-tooltip="${escapeHtml(card.details ?? card.text)}">Full effect ⓘ</span>${heatSummary(card, plannedTemperature)}</button>`;
   }).join('');
   document.querySelectorAll('[data-offer]').forEach((button) => button.addEventListener('click', () => {
     if (busy) return;
@@ -164,6 +191,12 @@ function renderPot() {
     const complete = entry.tier >= residue.maxTier;
     return `<div class="residue-row ${muted ? 'silenced' : ''}" data-residue-installed="${entry.id}"><img class="residue-icon" src="assets/residues/${encodeURIComponent(residue.imageId ?? entry.id)}.png" alt=""><div><strong>${residue.symbol ?? ''} ${escapeHtml(residue.name)}</strong><small>${highlightKeywords(residue.text)}</small><p class="residue-objective">${muted ? 'Silenced this bowl · ' : ''}${complete ? 'Objective complete' : `${escapeHtml(residue.objective.text)} ${entry.progress ?? 0}/${residue.objective.target}`}</p><progress max="${residue.objective.target}" value="${complete ? residue.objective.target : entry.progress ?? 0}" aria-label="${escapeHtml(residue.name)} objective progress"></progress></div><span class="badge">level ${entry.tier}</span></div>`;
   }).join('') : '<p class="empty">Win an encounter to leave a mark in this run’s pot.</p>';
+  $('#residues').querySelectorAll('[data-residue-installed]').forEach((row) => {
+    const definition = catalog.residues[row.dataset.residueInstalled];
+    const installed = state.residues.find((entry) => entry.id === definition.id);
+    row.classList.add(`residue-${definition.rarity}`);
+    row.querySelector('.badge').textContent = `${definition.rarity} · ${installed.tier}/${definition.maxTier}`;
+  });
 }
 
 function renderReactions() {
@@ -173,19 +206,8 @@ function renderReactions() {
   $('#reactions').innerHTML = inspectReactions(projected, catalog).map((reaction) => `<div class="reaction-row ${reaction.active ? '' : 'inactive'}"><div><strong>${reaction.active ? `${++order}. ` : ''}${keyword(reaction.name)}</strong><small>${reaction.needs.map((need) => `${keyword(need)} ${reaction.inputs[need].toFixed(1)}`).join(' + ')} · ${reaction.min}–${reaction.max}°C${reaction.orderSource ? `<br>Conducted by ${escapeHtml(sourceLabel(reaction.orderSource))}` : ''}${reaction.multiplier > 1 ? `<br>Bonus ×${reaction.multiplier.toFixed(2)}: ${reaction.modifiers.map((modifier) => escapeHtml(sourceLabel(modifier.sourceId))).join(', ')}` : ''}</small></div><div>${reaction.active ? `<span class="reaction-strength">strength ${reaction.strength.toFixed(2)}</span>` : '<small>inactive</small>'}</div></div>`).join('');
 }
 
-function renderBreakdown() {
-  const explanation = state.lastBreakdown;
-  if (!explanation) {
-    $('#last-serving-total').textContent = '—';
-    $('#breakdown').innerHTML = 'Serve to see the score for every ingredient and reaction.';
-    return;
-  }
-  $('#last-serving-total').textContent = `${format(explanation.total)} pts`;
-  $('#breakdown').classList.remove('empty');
-  $('#breakdown').innerHTML = explanation.details.map((detail) => {
-    const factors = detail.contributions.filter((part) => part.kind !== 'base').map((part) => `<span>${escapeHtml(sourceLabel(part.sourceId))} +${format(part.amount)}</span>`).join('');
-    return `<div class="breakdown-item"><div class="line"><strong>${escapeHtml(detail.name)}</strong><span>${format(detail.total)} pts</span></div><div class="formula"><span>${format(detail.base)} base after heat ×${detail.temperature.toFixed(2)}</span>${factors}${detail.customer !== 1 ? `<span>customer ×${detail.customer.toFixed(2)}</span>` : ''}<span>serving ×${detail.servingMultiplier.toFixed(2)}</span>${detail.demandMultiplier !== 1 ? `<span>royal request ×${detail.demandMultiplier.toFixed(2)}</span>` : ''}</div></div>`;
-  }).join('');
+function renderLedgerTotal() {
+  $('#last-serving-total').textContent = state.lastBreakdown ? `${format(state.lastBreakdown.total)} pts this bowl` : 'No serving yet';
 }
 
 function sourceLabel(sourceId) {
@@ -230,23 +252,48 @@ function render() {
   renderOffers();
   renderPot();
   renderReactions();
-  renderBreakdown();
+  renderLedgerTotal();
   renderAction();
   renderStageReview();
 }
 
-function renderEventLog(events) {
-  const visible = events.filter((event) => ['servingSizeChosen', 'residueLeveled', 'ingredientAdded', 'ingredientRemoved', 'ingredientDissolved', 'brothEnriched', 'presenceConsumed', 'resourceChanged', 'retentionRequested', 'baseScored', 'reactionPulse', 'scoreCalculated'].includes(event.type));
-  $('#event-log').innerHTML = visible.map((event) => {
+function renderEventLog(events, explanation) {
+  const numbered = events.filter((event) => !['offersGenerated', 'turnPrepared', 'encounterWon', 'encounterLost', 'runWon'].includes(event.type));
+  const details = explanation?.details ?? [];
+  const detailById = new Map(details.map((detail) => [detail.instanceId, detail]));
+  const precise = (number) => Number(number).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  $('#event-log').innerHTML = numbered.map((event, index) => {
     const deck = catalog.decks[deckIdOf(event.sourceId)] ?? catalog.decks.pantry;
-    return `<div class="event-line pending" data-event-id="${event.id}" style="--deck-color:${deck.color}"><span>${escapeHtml(describeEvent(event, catalog))}</span></div>`;
-  }).join('');
+    const parts = details.flatMap((detail) => detail.contributions.filter((part) => part.eventId === event.id && part.amount > 0).map((part) => ({ detail, part })));
+    const modifiers = event.data.modifiers?.map((entry) => `${sourceLabel(entry.sourceId)} ×${Number(entry.factor).toFixed(2)}`) ?? [];
+    const links = event.parentIds?.map((id) => numbered.find((earlier) => earlier.id === id)).filter(Boolean).map((parent) => sourceLabel(parent.sourceId)) ?? [];
+    const notes = [
+      event.data.orderSource ? `Conducted by ${sourceLabel(event.data.orderSource)}` : '',
+      modifiers.length ? `Reaction bonus: ${modifiers.join(', ')}` : '',
+      links.length ? `Copied from ${links.join(' + ')}` : '',
+      event.type === 'presenceDepleted' ? `${detailById.get(event.targetIds[0])?.name ?? 'Ingredient'} presence ${precise(event.data.before)} → ${precise(event.data.after)}` : '',
+      event.type === 'brothServed' ? `Broth ${precise(event.data.before)} → ${precise(event.data.after)} L` : '',
+      event.type === 'residueProgress' ? `Objective ${event.data.after}/${event.data.target}` : ''
+    ].filter(Boolean);
+    const pointRows = parts.map(({ detail, part }) => {
+      const factors = [
+        detail.customer !== 1 ? `customer ×${precise(detail.customer)}` : '',
+        detail.servingMultiplier !== 1 ? `bowl ×${precise(detail.servingMultiplier)}` : '',
+        detail.demandMultiplier !== 1 ? `request ×${precise(detail.demandMultiplier)}` : ''
+      ].filter(Boolean);
+      const final = part.amount * detail.customer * detail.servingMultiplier * detail.demandMultiplier;
+      return `<div class="ledger-part" data-point-awarded="${final}"><span>${escapeHtml(detail.name)} · ${part.kind === 'base' ? 'heat-adjusted base' : 'reaction'} ${precise(part.amount)}${factors.length ? ` · ${escapeHtml(factors.join(' · '))}` : ''}</span><b>+${precise(final)}</b></div>`;
+    }).join('') + (event.type === 'residueBonusScored' ? `<div class="ledger-part" data-point-awarded="${event.data.amount}"><span>${escapeHtml(catalog.cards[event.data.cardId]?.name ?? 'Ingredient')} · level ${event.data.level} residue bonus</span><b>+${precise(event.data.amount)}</b></div>` : '');
+    return `<div class="event-line pending" data-event-id="${event.id}" style="--deck-color:${deck.color}"><div class="event-head"><span><span class="event-number">#${String(index + 1).padStart(2, '0')}</span><strong>${escapeHtml(describeEvent(event, catalog))}</strong></span><span class="event-phase">${escapeHtml(event.phase)}</span></div>${notes.length ? `<small class="event-context">${escapeHtml(notes.join(' · '))}</small>` : ''}${pointRows ? `<div class="ledger-parts">${pointRows}</div>` : ''}</div>`;
+  }).join('') + (explanation ? '<p class="ledger-note">Point rows show base and reaction contributions after customer, bowl, and request multipliers. Simple residue bonuses appear as separate point rows. Display rounds to two decimals; the engine keeps full precision.</p>' : '');
 }
 
 function showChapterCard(recap = false) {
   const dialog = $('#level-dialog'), chapter = getEncounter(state), story = getStory(state);
   if (dialog.open) dialog.close();
-  dialog.innerHTML = `<div class="chapter-card"><img class="chapter-art" src="assets/characters/${chapter.portrait}.png" alt="${escapeHtml(chapter.name)}"><div class="dialog-inner"><p class="eyebrow">${escapeHtml(story.name)} · Arc ${chapter.arc + 1} / 3 · Chapter ${chapter.chapter} / 10 ${chapter.boss ? '· BOSS' : ''}</p><h2>${escapeHtml(chapter.name)}</h2><p>${escapeHtml(chapter.narrative)}</p><blockquote>${escapeHtml(chapter.dialogue[0])}</blockquote><p class="chapter-demand"><strong>${chapter.boss ? 'Demands' : 'Preferences'}</strong><br>${escapeHtml(bossDemandText(chapter))}<br>${escapeHtml(chapter.text)} · ${format(chapter.target)} points in ${chapter.servings} bowls.</p><div class="dialog-actions"><button id="chapter-close" type="button" class="quiet-button">${recap ? 'Back to cooking' : 'Inspect pot first'}</button>${recap ? '' : '<button id="chapter-begin" type="button" class="serve-button">Begin chapter</button>'}</div></div></div>`;
+  dialog.innerHTML = `<div class="chapter-card"><img class="chapter-art" src="assets/characters/${chapter.portrait}.png" alt="${escapeHtml(chapter.name)}"><div class="dialog-inner"><p class="eyebrow">${escapeHtml(story.name)} · Arc ${chapter.arc + 1} / ${story.arcs.length} · Chapter ${chapter.chapter} / ${story.chapters.length} ${chapter.boss ? '· BOSS' : ''}</p><h2>${escapeHtml(chapter.name)}</h2><p>${escapeHtml(chapter.narrative)}</p><p class="chapter-demand"><strong>${chapter.boss ? 'Demands' : 'Preferences'}</strong><br>${escapeHtml(bossDemandText(chapter))}<br>${escapeHtml(chapter.text)} · ${format(chapter.target)} points in ${chapter.servings} bowls.</p><div class="dialog-actions"><button id="chapter-close" type="button" class="quiet-button">${recap ? 'Back to cooking' : 'Inspect pot first'}</button>${recap ? '' : '<button id="chapter-begin" type="button" class="serve-button">Begin chapter</button>'}</div></div></div>`;
+  const [pass, skilled, engine] = starThresholds(chapter);
+  dialog.querySelector('.chapter-demand').insertAdjacentHTML('afterend', `<p class="chapter-stars">★ ${format(pass)} to pass · ★★ ${format(skilled)} and 1 reaction · ★★★ ${format(engine)} and 2 distinct scoring sources in one bowl</p>`);
   dialog.showModal();
   $('#chapter-close').addEventListener('click', () => dialog.close());
   $('#chapter-begin')?.addEventListener('click', () => commitSetup({ type: 'startChapter' }));
@@ -285,23 +332,38 @@ function showDialog() {
     const pot = POTS.find((entry) => entry.id === state.potId);
     const full = state.residues.length >= pot.residueSlots;
     const replacementControl = full ? `<label class="residue-replacement">Replace this residue when installing a new one:<select id="residue-replacement">${state.residues.map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(catalog.residues[entry.id].name)} · level ${entry.tier}</option>`).join('')}</select></label>` : '';
-    dialog.innerHTML = `<div class="dialog-inner"><p class="eyebrow">Chapter cleared</p><h2>A new memory for the pot.</h2><p class="win">${format(state.score)} / ${format(target)} points.</p><blockquote>${escapeHtml(encounter.dialogue[2])}</blockquote><p>${state.residues.length}/${pot.residueSlots} slots occupied. Choose a new residue; installed residues level by completing their objectives, not by picking them again. Progress lasts for this run.</p><p class="next-pressure"><strong>Next:</strong> ${escapeHtml(next.name)} ${next.boss ? '· BOSS' : ''} · ${format(next.target)} points</p>${replacementControl}<div class="dialog-options">${choices.map((residue) => `<button type="button" class="dialog-option" data-residue="${escapeHtml(residue.id)}"><img class="residue-icon" src="assets/residues/${encodeURIComponent(residue.imageId ?? residue.id)}.png" alt=""><strong>${residue.symbol ?? ''} ${escapeHtml(residue.name)}</strong><small>${highlightKeywords(residue.text)}</small><p class="residue-objective">Level 2: ${escapeHtml(residue.objective.text)}</p><small>${full ? 'Replace selected residue' : 'Install in empty slot'}</small></button>`).join('') || '<p>No new residues earned. Keep your pot and continue.</p>'}</div><div class="dialog-actions"><button type="button" class="quiet-button" id="inspect-run">Inspect pot and score</button><button type="button" class="quiet-button" id="keep-residue">Keep pot / continue</button></div></div>`;
+    dialog.innerHTML = `<div class="dialog-inner"><p class="eyebrow">Chapter cleared</p><h2>A new memory for the pot.</h2><p class="win">${format(state.score)} / ${format(target)} points.</p><p>${state.residues.length}/${pot.residueSlots} slots occupied. Choose a new residue; installed residues level by completing their objectives, not by picking them again. Progress lasts for this run.</p><p class="next-pressure"><strong>Next:</strong> ${escapeHtml(next.name)} ${next.boss ? '· BOSS' : ''} · ${format(next.target)} points</p>${replacementControl}<div class="dialog-options">${choices.map((residue) => `<button type="button" class="dialog-option" data-residue="${escapeHtml(residue.id)}"><img class="residue-icon" src="assets/residues/${encodeURIComponent(residue.imageId ?? residue.id)}.png" alt=""><strong>${residue.symbol ?? ''} ${escapeHtml(residue.name)}</strong><small>${highlightKeywords(residue.text)}</small><p class="residue-objective">Level 2: ${escapeHtml(residue.objective.text)}</p><small>${full ? 'Replace selected residue' : 'Install in empty slot'}</small></button>`).join('') || '<p>No new residues earned. Keep your pot and continue.</p>'}</div><div class="dialog-actions"><button type="button" class="quiet-button" id="inspect-run">Inspect pot and score</button><button type="button" class="quiet-button" id="keep-residue">Keep pot / continue</button></div></div>`;
     dialog.showModal();
     $('#inspect-run').addEventListener('click', inspectRun);
     dialog.querySelectorAll('[data-residue]').forEach((button) => button.addEventListener('click', () => chooseResidue(button.dataset.residue)));
     $('#keep-residue').addEventListener('click', () => chooseResidue(null));
   } else {
     const won = state.phase === 'won';
-    dialog.innerHTML = `<div class="dialog-inner"><p class="eyebrow">${won ? 'Story complete' : 'An unfinished story'}</p><h2>${won ? 'There is room for one more bowl.' : `${escapeHtml(encounter.name)} wanted more.`}</h2><p class="${won ? 'win' : 'loss'}">${format(state.score)} / ${format(target)} points.</p><p>${won ? escapeHtml(getStory(state).ending) : 'The road will still be here. Inspect your pot and serving ledger before trying a different plan.'}</p><p>${format(state.totalScore)} total points · ${state.residues.length} residues. A new story starts with a clean pot.</p><div class="dialog-actions"><button type="button" class="quiet-button" id="inspect-run">Inspect pot and score</button><button type="button" class="serve-button" id="again">Start another story</button></div></div>`;
+    const varietyMissing = !won && encounter.boss?.requiredTypes && state.encounterTypes.length < encounter.boss.requiredTypes;
+    dialog.innerHTML = `<div class="dialog-inner"><p class="eyebrow">${won ? 'Story complete' : 'An unfinished story'}</p><h2>${won ? 'There is room for one more bowl.' : varietyMissing ? 'The bandits needed a wider supper.' : `${escapeHtml(encounter.name)} wanted more.`}</h2><p class="${won ? 'win' : 'loss'}">${format(state.score)} / ${format(target)} points${varietyMissing ? ` · ${state.encounterTypes.length}/${encounter.boss.requiredTypes} ingredient types` : ''}.</p><p>${won ? escapeHtml(getStory(state).ending) : 'The road will still be here. Inspect your pot and serving ledger before trying a different plan.'}</p><p>${format(state.totalScore)} total points · ${state.residues.length} residues. A new story starts with a clean pot.</p><div class="dialog-actions"><button type="button" class="quiet-button" id="inspect-run">Inspect pot and score</button><button type="button" class="serve-button" id="again">Start another story</button></div></div>`;
     dialog.showModal();
     $('#inspect-run').addEventListener('click', inspectRun);
     $('#again').addEventListener('click', () => { dialog.close(); showWelcome(); });
   }
+  if (state.phase === 'reward' || state.phase === 'won') {
+    const stars = state.lastEncounterStars;
+    dialog.querySelector('.dialog-inner').insertAdjacentHTML('afterbegin', `<p class="chapter-resolution">${escapeHtml(encounter.resolution)}</p><p class="star-result" aria-label="${stars} stars earned">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)} · ${stars} star${stars === 1 ? '' : 's'}</p>`);
+  }
+  if (state.phase === 'won') {
+    const stars = state.chapterResults.reduce((sum, result) => sum + result.stars, 0);
+    dialog.querySelector('.star-result').insertAdjacentHTML('afterend', `<p class="run-stars">${stars}/${state.chapterResults.length * 3} story stars · ${state.chapterResults.map((result) => '★'.repeat(result.stars) + '☆'.repeat(3 - result.stars)).join(' · ')}</p>`);
+  }
+  if (state.phase === 'reward') dialog.querySelectorAll('[data-residue]').forEach((button) => {
+    const residue = catalog.residues[button.dataset.residue];
+    button.classList.add(`residue-${residue.rarity}`);
+    button.querySelector('strong').insertAdjacentHTML('afterend', `<small class="residue-rarity">${escapeHtml(residue.rarity)} · levels 1–${residue.maxTier}</small>`);
+    button.querySelector('.residue-objective').textContent = `Repeat to level: ${residue.objective.text}`;
+  });
 }
 
 function inspectRun() {
   $('#level-dialog').close();
-  $('#breakdown').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('#serving-ledger').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function chooseResidue(residueId) {
@@ -333,8 +395,8 @@ async function serve(disposition) {
   busy = true;
   render();
   potPhysics.sync(result.explanation.details.map((detail) => ({ instanceId: detail.instanceId, cardId: detail.cardId, presence: detail.presence, volume: state.contents.find((entry) => entry.instanceId === detail.instanceId)?.volume })), catalog);
-  renderEventLog(result.events);
-  await playEvents(result.events, { catalog, explanation: result.explanation, speed, soundEnabled, getSkip: () => skipEffects, labelElement: $('#performance-label'), layer: $('#fx-layer'), baseline, target: encounterTarget(state), onScore: renderAudience, onReaction: (event) => potPhysics.excite(event.data.participantIds ?? event.targetIds, Math.min(160, 70 + event.data.total * .2)) });
+  renderEventLog(result.events, result.explanation);
+  await playEvents(result.events, { catalog, explanation: result.explanation, speed, soundEnabled, getSkip: () => skipEffects, labelElement: $('#performance-label'), layer: $('#fx-layer'), baseline, target: starThresholds(getEncounter(state))[2], onScore: renderAudience, onReaction: (event) => potPhysics.excite(event.data.participantIds ?? event.targetIds, Math.min(160, 70 + event.data.total * .2)) });
   busy = false;
   skipEffects = false;
   render();

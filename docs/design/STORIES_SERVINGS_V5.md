@@ -1,5 +1,7 @@
 # Stories, servings and residue objectives — rules v5
 
+Historical snapshot. The current caravan story and one-deck setup are described in [the story brief](STORY_WRITING_V6.md); current stars, 32 residues, and rarity-based levels are in [rules v7](PROGRESSION_V7.md) and [the implemented contract](IMPLEMENTED_DECK_CONTRACT.md). The v5 royal-story and serving details below remain useful reference; its residue rules and the old clock-town story are no longer current.
+
 Implemented 27 October 2026. This supersedes v4's eight-encounter route, pot-specific target, fixed bowl size and repeat-pick residue upgrades. The engine identities and event-driven presentation remain. Tuning is provisional; see [balance evidence](BALANCE_V5.md).
 
 ## Player loop
@@ -35,7 +37,7 @@ All authored text, chapter preferences, portraits, dialogue, boss parameters and
 | Story | Arc one finale | Arc two finale | Final encounter |
 | --- | --- | --- | --- |
 | The Uninvited Cook | Picky Princess | Royal Pilot Light dragon | Witch envoy |
-| The Long Table | Grum's large-bowl toll | Aunt Thistle's curse | Storm dragon |
+| The Town Without Dawn | Grum's large-bowl crossing | Aunt Thistle's inspection | The dragon's fire beneath the bell |
 
 Normal encounters have only +20% / −20% ingredient-type preferences. Bosses keep preferences and add visible demands:
 
@@ -46,7 +48,7 @@ Normal encounters have only +20% / −20% ingredient-type preferences. Bosses ke
 
 Boss randomness is prepared before input, never rerolled by changing selection or previewing. Both stories use targets `round(400 × 1.28^chapterIndex × bossFactor)`, where bosses use 1.2 and normal chapters 1. Targets: **400 / 512 / 786 / 839 / 1074 / 1649 / 1759 / 2252 / 2882 / 4427**. They are identical for both pots.
 
-Six generated character/situation portraits appear in chapter cards and Feast progress. Dialogue and meter language change at 0%, 45% and 100% of the target; bosses use approval, appetite, ego or suspicion as appropriate. Portraits are static; frame color and text change as score bubbles arrive. [Asset prompts and filenames](../../assets/characters/README.md) are recorded separately.
+Six generated character/situation portraits appear in chapter cards and Feast progress. Short speech bubbles appear as scoring advances, with phrases selected from the audience's current mood stage; bosses use approval, appetite, fire or suspicion as appropriate. Portraits are static. See the [story writing brief](STORY_WRITING_V6.md) for the current tone and future deck concepts. [Asset prompts and filenames](../../assets/characters/README.md) are recorded separately.
 
 ## Residues and secondary goals
 
@@ -69,7 +71,7 @@ Objectives count actual resolved events: positive Browning/Infusion, small bowls
 
 The shared objective metric registry is in `packages/game-core/residue-objectives.js`. Manifests choose a validated metric, integer target and description. Adding a completely new metric currently requires a host-registry change and a test; arbitrary executable objectives are not supported. Upgrades emit `residueProgress` / `residueLeveled`. New setup and portion events are deterministic.
 
-The chemistry dock is sticky, high on the page, and fixed-height with internal scrolling. Its six effective-property totals and four common reactions do not move down as pot/residue lists grow. Reaction inspection reflects the current pot at selected heat; the full action preview includes the proposed draft and pre-serve costs. Score analysis remains below play. Stocks and new residues use explicit `imageId` aliases for existing art; missing filename guesses are not required.
+The chemistry panel appears above the draft and pot and scrolls with them. Its six effective-property totals and four common reactions are visible in the same area. Reaction inspection reflects the current pot at selected heat; the full action preview includes the proposed draft and pre-serve costs. The serving ledger replaces the separate score analysis, listing events and exact contribution modifiers in resolution order. Stocks and new residues use explicit `imageId` aliases for existing art; missing filename guesses are not required.
 
 ## Acceptance and remaining design questions
 

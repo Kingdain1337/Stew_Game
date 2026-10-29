@@ -10,6 +10,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .deck-choice:hover { transform: translateY(-3px); }
 .deck-choice.selected { border-color: var(--deck-color); background: var(--deck-pale); box-shadow: 0 8px 18px rgba(60, 35, 21, .12); }
 .deck-choice strong { font: 700 1rem Fraunces, Georgia, serif; }
+.deck-role { padding: 3px 6px; border-radius: 5px; background: color-mix(in srgb, var(--deck-color) 16%, white); color: var(--deck-color); font: 700 .64rem 'DM Mono', monospace; }
 .deck-choice small { color: var(--muted); line-height: 1.35; }
 .deck-symbol { color: var(--deck-color); font-size: 1.6rem; line-height: 1; }
 .seed-label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font: 700 12px 'DM Mono', monospace; }
@@ -49,8 +50,18 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .performance-controls { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
 .performance-controls button { padding: 6px 8px; font-size: .68rem; }
 .performance-label { margin: 0 0 8px; min-height: 24px; color: var(--red); font: 700 1rem Fraunces, Georgia, serif; }
-.event-log { display: grid; gap: 5px; max-height: 178px; overflow: auto; }
+.event-log { display: grid; gap: 8px; overflow: visible; }
 .event-line { padding: 6px 9px; border-left: 3px solid var(--deck-color); border-radius: 0 5px 5px 0; background: #faf1e4; color: #584339; font-size: .73rem; line-height: 1.35; }
+.event-line .event-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; font-size:.83rem; }
+.event-line .event-number { display:inline-block; min-width:35px; font:800 .7rem 'DM Mono',monospace; color:var(--deck-color); }
+.event-line .event-phase { color:var(--muted); font:.68rem 'DM Mono',monospace; }
+.event-line .event-context { display:block; padding-left:35px; color:#695849; margin-top:4px; }
+.event-line .ledger-parts { display:grid; gap:3px; margin:7px 0 1px 35px; }
+.event-line .ledger-part { display:flex; justify-content:space-between; gap:12px; padding:5px 7px; border-radius:4px; background:#fffaf2; }
+.event-line .ledger-part b { color:var(--green); white-space:nowrap; }
+.event-line.current { box-shadow:0 0 0 2px var(--deck-color); }
+.event-line.pending { opacity:.8; }
+.ledger-note { color:var(--muted); font-size:.71rem; }
 .deck-meters { display: grid; gap: 6px; margin: 13px 0; }
 .deck-meter { display: flex; justify-content: space-between; padding: 8px 10px; border: 1px solid var(--deck-color); border-radius: 8px; background: var(--deck-pale); color: var(--ink); font: 700 11px 'DM Mono', monospace; }
 .replace-choice { width: 100%; border: 1px solid transparent; color: var(--ink); text-align: left; cursor: pointer; }
@@ -126,7 +137,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .event-line.pending { opacity: .43; }
 .event-line.current { background: #ffe0ac; border-left-width: 6px; }
 @keyframes reaction-flow { from { stroke-dashoffset: 0; opacity: .45; } to { stroke-dashoffset: -14; opacity: 1; } }
-.score-bubble { position: fixed; display: grid; place-items: center; min-width: 42px; min-height: 42px; padding: 6px 9px; border: 2px solid #fff9; border-radius: 50%; background: color-mix(in srgb, var(--reaction-color) 85%, #fff); box-shadow: 0 0 20px var(--reaction-color), inset 0 0 12px #fff8; color: #fff; font: 800 1rem/1 'DM Mono', monospace; text-shadow: 0 1px 3px #2a180d; white-space: nowrap; }
+.score-bubble { position: fixed; display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: 7px 10px; border: 2px solid #fff; border-radius: 50%; background: color-mix(in srgb, var(--reaction-color) 92%, #312115); box-shadow: 0 0 22px var(--reaction-color), inset 0 0 10px #fff8; color: #fff; font: 800 1.12rem/1 'DM Mono', monospace; text-shadow: 0 2px 4px #1a0d08; white-space: nowrap; }
 .game-grid { grid-template-columns: minmax(0, 1fr) 420px; }
 .pot-visual { max-width: 340px; width: min(100%, 340px); height: 306px; }
 .pot-interior, .pot-bubbles { top: 18%; left: 19%; width: 62%; height: 22%; border-radius: 48% 48% 40% 40%; }
@@ -161,6 +172,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .stock-art { display:block; width:95px; height:80px; object-fit:contain; margin:0 auto 12px; }
 .royal-request { display:block; margin:6px 0; border-radius:5px; padding:7px; background:#f5dda3; color:#6c3b0d; font:700 .7rem 'DM Mono',monospace; }
 .audience { display:grid; grid-template-columns:94px minmax(0,1fr); gap:12px; margin-top:12px; align-items:start; }
+.audience { position:relative; min-height:115px; }
+.audience-speech { position:absolute; z-index:4; left:64px; top:18px; max-width:min(230px,75vw); padding:9px 13px; border:2px solid #8a613e; border-radius:18px 18px 18px 3px; background:#fffdf6; box-shadow:0 5px 14px #4f2a1e44; color:#39251b; font:700 .82rem/1.35 Georgia,serif; pointer-events:none; animation:speech-float 3.2s ease-out forwards; }
+@keyframes speech-float { 0% { transform:translateY(24px) scale(.9); opacity:0; } 14% { opacity:1; } 65% { opacity:1; } 100% { transform:translateY(-92px) scale(1.02); opacity:0; } }
 .audience-portrait { width:94px; height:112px; object-fit:cover; object-position:50% 25%; border-radius:12px; border:3px solid #ae8b70; }
 .audience[data-level="1"] .audience-portrait { border-color:#c39232; }
 .audience[data-level="2"] .audience-portrait { border-color:#517f52; }
@@ -182,7 +196,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
   .action-panel { flex-direction:column; flex-wrap:nowrap; }
   .serving-picker { flex-basis:auto; width:100%; }
 }
-.chemistry-dock { position:sticky; top:8px; z-index:20; height:218px; max-height:38vh; overflow:auto; padding:12px 16px; margin-bottom:16px; background:#fff8eaf5; border:2px solid #baa887; box-shadow:0 8px 24px #442b2226; }
+.chemistry-dock { position:static; padding:12px 16px; margin-bottom:16px; background:#fff8eaf5; border:2px solid #baa887; box-shadow:0 8px 24px #442b2226; }
 .chemistry-heading { display:flex; justify-content:space-between; align-items:center; gap:8px; }
 .chemistry-heading h2 { font-size:1.05rem; }
 .property-totals { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; margin:10px 0; }
@@ -192,6 +206,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .chemistry-dock .reaction-row { min-height:100px; }
 .chemistry-dock .reaction-row small { max-width:none; }
 .chemistry-dock .reaction-row div:last-child { flex-shrink:0; }
+.chemistry-dock .reaction-row div:first-child { min-width:0; overflow-wrap:anywhere; }
 .pot-contents { max-height:340px; overflow:auto; }
 .residue-list { max-height:580px; overflow:auto; }
 .residue-row { align-items:start; }
@@ -201,6 +216,24 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
 .residue-row.silenced { border:2px dashed #8c5a99; background:#e9dfe9; }
 .residue-row.silenced .residue-icon { filter:grayscale(1); }
 .residue-row.silenced .residue-objective { color:#784480; font-weight:800; }
+.star-goals { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; margin:8px 0; font:700 .65rem 'DM Mono',monospace; }
+.star-goals span { padding:5px; border:1px solid #c8b9a0; border-radius:6px; color:#74695b; background:#f4ecdc; }
+.star-goals .reached { color:#6e3f09; border-color:#d9a537; background:#ffedbd; }
+.dialog-inner > .star-result { font:800 1.2rem 'DM Mono',monospace; color:#ad7018; margin:4px 0 12px; }
+.dialog-inner > .chapter-resolution { border-left:5px solid #bc8a47; padding:10px 13px; background:#fff4dc; color:#382a1e; font-size:1.05rem; line-height:1.5; }
+.run-stars { font:700 .72rem 'DM Mono',monospace; overflow-wrap:anywhere; }
+.residue-rarity { text-transform:capitalize; font-weight:800; letter-spacing:.06em; }
+.dialog-option.residue-common { border-color:#9c9c88; }
+.dialog-option.residue-uncommon { border-color:#4e986b; }
+.dialog-option.residue-rare { border-color:#657dd1; }
+.dialog-option.residue-ultra-rare { border-color:#b270bd; box-shadow:0 0 12px #b270bd66; }
+.residue-row.residue-common { border-left:4px solid #9c9c88; }
+.residue-row.residue-uncommon { border-left:4px solid #4e986b; }
+.residue-row.residue-rare { border-left:4px solid #657dd1; }
+.residue-row.residue-ultra-rare { border-left:4px solid #b270bd; }
+.residue-row .badge { max-width:80px; white-space:normal; text-align:center; text-transform:capitalize; }
+.chapter-stars { margin:10px 0; padding:8px 10px; border-radius:7px; background:#f9edcf; color:#72531e; font:700 .75rem 'DM Mono',monospace; line-height:1.6; }
+@media(max-width:620px) { .star-goals { grid-template-columns:1fr; } }
 .ability-cutoff { display:block; margin-top:5px; font-size:.72rem; }
 /* On phones, keep the guest and cauldron ahead of the draft, with a
    swipeable offer row instead of three screenfuls of ingredient cards. */
@@ -235,5 +268,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid #236f88; outline-
   .tooltip-popover { max-height:calc(100dvh - 16px); overflow-y:auto; pointer-events:auto; }
   .pot-contents { max-height:220px; }
 }
-@media(max-width:900px) { .property-totals { grid-template-columns:repeat(3,minmax(0,1fr)); }.chemistry-dock .reaction-list { grid-template-columns:repeat(2,minmax(0,1fr)); }.chemistry-dock { height:260px; }.chemistry-dock .reaction-row { min-height:90px; } }
-@media(max-width:620px) { .story-choices,.stock-options { grid-template-columns:1fr; }.chapter-card { display:block; }.chapter-art { height:180px; min-height:0; object-position:50% 28%; }.customer-card { padding-right:20px; }.chapter-recap { position:static; margin-top:10px; }.chemistry-dock { top:0; padding:10px; max-height:32vh; }.chemistry-heading .muted { font-size:.63rem; }.property-total { padding:5px; font-size:.65rem; }.property-total strong { font-size:.8rem; }.size-choice { padding:7px; }.size-choice small { font-size:.6rem; }.dialog-actions { flex-wrap:wrap; } }
+@media(max-width:900px) { .property-totals { grid-template-columns:repeat(3,minmax(0,1fr)); }.chemistry-dock .reaction-list { grid-template-columns:repeat(2,minmax(0,1fr)); }.chemistry-dock .reaction-row { min-height:90px; } }
+@media(max-width:620px) { .story-choices,.stock-options { grid-template-columns:1fr; }.chapter-card { display:block; }.chapter-art { height:180px; min-height:0; object-position:50% 28%; }.customer-card { padding-right:20px; }.chapter-recap { position:static; margin-top:10px; }.chemistry-heading .muted { font-size:.63rem; }.property-total { padding:5px; font-size:.65rem; }.property-total strong { font-size:.8rem; }.size-choice { padding:7px; }.size-choice small { font-size:.6rem; }.dialog-actions { flex-wrap:wrap; } }
+@media(max-width:360px) { .property-totals { grid-template-columns:repeat(2,minmax(0,1fr)); }.chemistry-dock .reaction-list { grid-template-columns:1fr; }.chemistry-dock .reaction-row { min-height:0; } }

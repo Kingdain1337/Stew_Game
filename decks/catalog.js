@@ -17,6 +17,7 @@ export const deckSources = [
 ];
 
 const PROPERTIES = new Set(['protein', 'fat', 'sugar', 'acid', 'aromatic', 'mineral']);
+const RESIDUE_CAPS = { common: 10, uncommon: 8, rare: 5, 'ultra-rare': 3 };
 
 function assert(condition, message) {
   if (!condition) throw new Error(`Invalid deck package: ${message}`);
@@ -43,8 +44,9 @@ export async function loadCatalog(readJson = async (url) => {
     for (const residue of deck.residues) {
       assert(residue.id.startsWith(`${deck.id}.`), `${residue.id}: namespace`);
       assert(!residues[residue.id], `${residue.id}: duplicate residue`);
-      assert(residue.maxTier === 2, `${residue.id}: tier limit must be 2`);
+      assert(residue.maxTier === RESIDUE_CAPS[residue.rarity], `${residue.id}: tier limit must match rarity`);
       assert(residue.objective && RESIDUE_METRICS.includes(residue.objective.metric) && Number.isInteger(residue.objective.target) && residue.objective.target > 0 && typeof residue.objective.text === 'string', `${residue.id}: objective`);
+      if (residue.effect) assert(['all', 'type', 'size', 'heat'].includes(residue.effect.kind) && Number.isFinite(residue.effect.perLevel) && residue.effect.perLevel > 0 && residue.effect.perLevel <= .05, `${residue.id}: simple effect`);
       residues[residue.id] = { ...residue, deckId: deck.id };
     }
     for (const card of deck.cards) {
@@ -54,7 +56,8 @@ export async function loadCatalog(readJson = async (url) => {
       assert(Number.isFinite(card.reactivity) && card.reactivity > 0, `${card.id}: reactivity`);
       assert(['common', 'uncommon', 'rare'].includes(card.rarity), `${card.id}: rarity`);
       assert(residues[card.residueId]?.deckId === deck.id, `${card.id}: residue reference`);
-      assert(typeof deck.presentation.cardDescriptions[card.id] === 'string' && deck.presentation.cardDescriptions[card.id].length >= 80, `${card.id}: detailed description`);
+      assert(typeof deck.presentation.cardDescriptions[card.id] === 'string' && deck.presentation.cardDescriptions[card.id].length >= 20 && deck.presentation.cardDescriptions[card.id].length <= 125, `${card.id}: concise description`);
+      assert(typeof deck.presentation.cardDetails[card.id] === 'string' && deck.presentation.cardDetails[card.id].length >= 80, `${card.id}: detailed tooltip`);
       assert(Array.isArray(card.tags), `${card.id}: tags`);
       assert(Array.isArray(card.temperature) && card.temperature.length >= 2, `${card.id}: curve`);
       let previous = -1;
@@ -66,7 +69,7 @@ export async function loadCatalog(readJson = async (url) => {
       for (const [property, amount] of Object.entries(card.properties)) {
         assert(PROPERTIES.has(property) && Number.isFinite(amount) && amount > 0, `${card.id}: property ${property}`);
       }
-      cards[card.id] = { ...card, text: deck.presentation.cardDescriptions[card.id], deckId: deck.id };
+      cards[card.id] = { ...card, text: deck.presentation.cardDescriptions[card.id], details: deck.presentation.cardDetails[card.id], deckId: deck.id };
     }
   }
   for (const deck of Object.values(decks)) {

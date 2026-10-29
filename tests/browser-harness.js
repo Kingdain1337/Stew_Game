@@ -1,5 +1,5 @@
 import { loadCatalog } from '../decks/catalog.js';
-import { POTS, createGame, step, occupiedVolume, availableResidues } from '../packages/game-core/index.js';
+import { POTS, STORIES, createGame, step, occupiedVolume, availableResidues } from '../packages/game-core/index.js';
 import { chooseAction } from '../tools/bot-policy.js';
 
 const frame = document.querySelector('#game');
@@ -29,7 +29,8 @@ try {
   function checkMobile(label) {
     if (!mobileWidth) return;
     const viewport = frame.contentWindow;
-    assert(page.documentElement.scrollWidth <= viewport.innerWidth + 1, `${label}: horizontal page overflow`);
+    const overflowing = [...page.querySelectorAll('#game *')].filter((element) => element.getBoundingClientRect().right > viewport.innerWidth + 1).map((element) => `${element.id || element.className}:${Math.round(element.getBoundingClientRect().right)}`).slice(0, 8);
+    assert(page.documentElement.scrollWidth <= viewport.innerWidth + 1, `${label}: horizontal page overflow: ${overflowing.join(', ')}`);
     const dialog = page.querySelector('#level-dialog');
     if (dialog.open) {
       const rect = dialog.getBoundingClientRect();
@@ -44,7 +45,8 @@ try {
   const potId = ['royal', 'journey'].includes(testCase) ? 'royal' : 'iron';
   const storyId = ['royal', 'journey'].includes(testCase) ? 'road' : 'royal';
   const seed = testCase === 'journey' ? 1 : 123;
-  let state = createGame(catalog, { seed, potId, storyId, deckIds: ['pantry', 'culture'] }).state;
+  const themeId = testCase === 'journey' ? 'hearth' : 'culture';
+  let state = createGame(catalog, { seed, potId, storyId, deckIds: ['pantry', themeId] }).state;
   function command(action) {
     const result = step(catalog, state, action);
     assert(!result.errors.length, result.errors.join(', '));
@@ -54,10 +56,16 @@ try {
   page.querySelector('#seed-input').value = String(seed);
   page.querySelector(`[data-pot="${potId}"]`).click();
   page.querySelector(`[data-story="${storyId}"]`).click();
+  assert(page.querySelectorAll('.deck-choice.selected').length === 1, 'Setup permits more than one themed deck');
+  if (themeId !== page.querySelector('.deck-choice.selected').dataset.deck) page.querySelector(`[data-deck="${themeId}"]`).click();
   assert(!page.querySelector('#level-dialog').open, 'Pot/story selection started run early');
   page.querySelector('#start-story').click();
   await waitFor(() => page.querySelectorAll('[data-stock]').length === 3);
   checkMobile('Stocks');
+  const modalKeyword = page.querySelector('#level-dialog [data-tooltip]');
+  modalKeyword.dispatchEvent(new PointerEvent('pointerover', { bubbles:true, pointerType:'mouse' }));
+  assert(page.querySelector('#level-dialog #tooltip-popover') && !page.querySelector('#tooltip-popover').hidden, 'Tooltip is behind the stock/reward modal');
+  modalKeyword.dispatchEvent(new PointerEvent('pointerout', { bubbles:true, pointerType:'mouse' }));
   assert(page.querySelector('#pot-volume').textContent.startsWith('0.00'), 'Starting pot not empty');
   assert(page.querySelector('#serve-button').disabled, 'Can serve before stock selection');
   const stockId = state.stockOffers[0];
@@ -90,7 +98,7 @@ try {
   assert(page.querySelectorAll('[data-serving-size]').length === 3, 'Missing sizes');
   assert(page.querySelectorAll('#property-totals .property-badge').length === 6 || page.querySelector('#property-totals').children.length === 6, 'Missing property totals');
   assert(page.querySelector('#residue-count').textContent.includes(`0/${POTS.find((pot) => pot.id === potId).residueSlots}`), 'Wrong residue slots');
-  assert(page.querySelector('#target-score').textContent === '400', 'Target coupled to pot');
+  assert(page.querySelector('#target-score').textContent === String(STORIES.find((entry) => entry.id === storyId).chapters[0].target), 'Target coupled to pot or wrong story');
 
   async function serve(action, animate = false) {
     page.querySelector(`[data-offer="${action.offerId}"]`).click();
@@ -108,6 +116,8 @@ try {
     await waitFor(() => page.querySelector('#round-status').textContent !== beforeStatus &&
       (page.querySelector('#level-dialog').open || !page.querySelector('[data-offer]').disabled));
     await waitFor(() => page.querySelector('#total-score').textContent === Number(state.score).toLocaleString(undefined, { maximumFractionDigits: 1 }));
+    const ledgerTotal = [...page.querySelectorAll('#event-log [data-point-awarded]')].reduce((sum, row) => sum + Number(row.dataset.pointAwarded), 0);
+    assert(Math.abs(ledgerTotal - result.explanation.total) < 1e-7, 'Ledger rows do not account for all scored points');
     assert(!errors.length, errors.join('; '));
     checkMobile(`After bowl ${state.round}`);
     const actual = Number(page.querySelector('#pot-volume').textContent.match(/^[\d.]+/)?.[0]);
@@ -139,7 +149,7 @@ try {
       assert(page.documentElement.scrollWidth <= frame.contentWindow.innerWidth + 1, `Horizontal page overflow at ${width}: ${overflowing.join(', ')}`);
     }
     frame.style.width = '100%';
-    assert(frame.contentWindow.getComputedStyle(page.querySelector('#chemistry-dock')).position === 'sticky', 'Reactions not pinned');
+    assert(frame.contentWindow.getComputedStyle(page.querySelector('#chemistry-dock')).position === 'static', 'Chemistry should scroll with the pot');
     await waitFor(() => [...page.querySelectorAll('.card-art, #pot-art, #audience img')].every((img) => img.complete && img.naturalWidth >= 128));
   }
 
@@ -151,23 +161,29 @@ try {
     page.querySelector('[data-serving-size="large"]').click();
     assert(smallPreview !== page.querySelector('#preview-summary').textContent, 'Serving preview did not change');
     await serve({ type: 'serve', offerId, disposition: 'add', temperature: 50, servingSize: 'large' });
-    assert(page.querySelector('#breakdown').textContent.includes('serving'), 'Missing portion breakdown');
+    assert(page.querySelector('#event-log').textContent.includes('bowl ×1.5'), 'Missing portion multiplier in ledger');
   } else {
-    let rewards = 0, sawBroth = false, sawPrincess = false, upgraded = false, sawCurse = false, sawLockedHeat = false;
-    const limit = testCase === 'journey' ? 50 : testCase === 'stage' ? 5 : testCase === 'residue' ? 16 : 24;
+    let rewards = 0, sawBroth = false, sawPrincess = false, upgraded = false, sawCurse = false, sawLockedHeat = false, sawVariety = false;
+    const limit = testCase === 'journey' ? 5 * STORIES.find((entry) => entry.id === storyId).chapters.length : testCase === 'stage' ? 5 : testCase === 'residue' ? 16 : 24;
     for (let turn = 0; turn < limit; turn++) {
       if (state.phase === 'lost') throw new Error(`Fixture lost at chapter ${state.encounterIndex + 1}`);
       if (state.phase === 'reward') {
         const dialog = page.querySelector('#level-dialog');
         assert(dialog.open, 'Reward missing');
-        assert(page.querySelector('#breakdown .breakdown-item'), 'Last bowl unavailable');
+        const rewardKeyword = dialog.querySelector('[data-tooltip]');
+        if (rewardKeyword) {
+          rewardKeyword.dispatchEvent(new PointerEvent('pointerover', { bubbles:true, pointerType:'mouse' }));
+          assert(dialog.contains(page.querySelector('#tooltip-popover')) && !page.querySelector('#tooltip-popover').hidden, 'Residue tooltip is behind the picker');
+          rewardKeyword.dispatchEvent(new PointerEvent('pointerout', { bubbles:true, pointerType:'mouse' }));
+        }
+        assert(page.querySelector('#event-log .ledger-part'), 'Last bowl ledger unavailable');
         page.querySelector('#inspect-run').click();
         assert(!dialog.open && !page.querySelector('#stage-review').hidden, 'Inspection blocked');
         page.querySelector('#reopen-stage').click();
         assert(dialog.open, 'Cannot reopen reward');
         const options = availableResidues(state, catalog);
         const full = state.residues.length >= POTS.find((pot) => pot.id === potId).residueSlots;
-        const residue = full ? null : testCase === 'journey' ? options.find((entry) => entry.deckId === 'culture') ?? options[0] : options.find((entry) => entry.id === 'pantry.hearth-coating') ?? options.find((entry) => entry.deckId === 'culture');
+        const residue = full ? null : testCase === 'journey' ? options.find((entry) => entry.deckId === themeId) ?? options[0] : options.find((entry) => entry.id === 'pantry.hearth-coating') ?? options.find((entry) => entry.deckId === 'culture');
         if (residue) {
           assert(!page.querySelector('#residue-replacement'), 'Free slots requested replacement');
           assert([...page.querySelectorAll('[data-residue]')].every((button) => !state.residues.some((entry) => entry.id === button.dataset.residue)), 'Duplicate upgrade offered');
@@ -192,7 +208,11 @@ try {
         sawLockedHeat = true;
         assert(page.querySelector('#temperature-slider').disabled && Number(page.querySelector('#temperature-slider').value) === state.bossTurn.forcedHeat, 'Dragon heat not locked in UI');
       }
-      if (testCase === 'journey' && [2, 9].includes(state.encounterIndex)) assert(page.querySelector('[data-serving-size="small"]').disabled, 'Large-only boss permits small');
+      if (state.storyId === 'road' && state.encounterIndex === 2) {
+        sawVariety = true;
+        assert(page.querySelector('#boss-turn').textContent.includes('Bandit variety'), 'Bandit variety not visible');
+      }
+      if (testCase === 'journey' && [4, 6].includes(state.encounterIndex)) assert(page.querySelector('[data-serving-size="small"]').disabled, 'Large-only boss permits small');
       const action = chooseAction(catalog, state, testCase === 'journey' ? 'engineAware' : 'immediate');
       const result = await serve(action);
       sawBroth ||= !!page.querySelector('.broth-row');
@@ -206,7 +226,7 @@ try {
       const dialog = page.querySelector('#level-dialog');
       assert(dialog.open, 'Missing end-of-stage prompt');
       page.querySelector('#inspect-run').click();
-      assert(!dialog.open && !page.querySelector('#stage-review').hidden && page.querySelector('#breakdown .breakdown-item'), 'End-of-stage inspection blocked');
+      assert(!dialog.open && !page.querySelector('#stage-review').hidden && page.querySelector('#event-log .ledger-part'), 'End-of-stage inspection blocked');
       page.querySelector('#reopen-stage').click();
       assert(dialog.open, 'Cannot reopen stage');
     }
@@ -218,10 +238,10 @@ try {
     }
     if (testCase === 'broth') assert(sawBroth, 'No broth after 24 bowls');
     if (testCase === 'journey') {
-      assert(state.phase === 'won' && rewards === 9 && sawCurse && sawLockedHeat, 'Incomplete story/boss coverage');
+      assert(state.phase === 'won' && rewards === 6 && sawVariety && sawLockedHeat, 'Incomplete story/boss coverage');
       assert(page.querySelector('#level-dialog').textContent.includes('Story complete'), 'Ending not displayed');
-      document.body.dataset.bowls = '50';
-      document.body.dataset.chapters = '10';
+      document.body.dataset.bowls = '35';
+      document.body.dataset.chapters = '7';
     }
   }
   assert(!errors.length, errors.join('; '));

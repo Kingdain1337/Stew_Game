@@ -14,7 +14,7 @@
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">The royal kitchens present</p>
+          <p class="eyebrow">An old pot, many roads</p>
           <h1>Forever Stew</h1>
         </div>
         <button id="new-game" class="quiet-button">New storyline</button>
@@ -24,10 +24,10 @@
         <div class="welcome-copy">
           <p class="eyebrow">Three playable deck experiments</p>
           <h2>Make one old pot worth remembering.</h2>
-          <p>Choose a story, pack your decks, and pick a vessel. Begin with a humble stock; decide how much to serve and what to save. Ten chapters, three arcs, and guests with very particular appetites. Residues grow through your cooking and reset with the next story.</p>
+          <p>Choose a story, one deck, and a vessel. Begin with a humble stock; decide how much to serve and what to save. Each journey has its own length and guests with particular appetites. Residues grow through your cooking and reset with the next story.</p>
           <p class="label">Choose your story</p><div id="story-choices" class="story-choices"></div>
           <div class="legend"><span><i class="dot score"></i> base score</span><span><i class="dot reaction"></i> reaction</span><span><i class="dot residue"></i> residue</span></div>
-          <div class="deck-intro"><p class="label">Choose one or two decks</p><div id="deck-choices" class="deck-choices"></div></div>
+          <div class="deck-intro"><p class="label">Choose one deck · Pantry is always included</p><div id="deck-choices" class="deck-choices"></div></div>
           <label class="seed-label" for="seed-input">Run seed <input id="seed-input" type="number" min="0" max="4294967295" step="1" /><span>Keep a seed to replay the same offers.</span></label>
         </div>
         <div class="pot-start"><p class="label">Choose your vessel · either pot, either story</p><div class="pot-choices" id="pot-choices"></div><button id="start-story" class="serve-button" type="button">Begin story</button></div>
@@ -57,9 +57,10 @@
               <div class="actions"><button id="discard-button" class="quiet-button" disabled>Discard choice</button><button id="serve-button" class="serve-button" disabled>Serve 0.4 L</button></div>
             </section>
             <p id="preview-summary" class="preview-summary" aria-live="polite"></p>
-            <section class="panel performance-panel">
-              <div class="section-heading"><div><p class="eyebrow">The serving unfolds</p><h2>What caused what</h2></div><div class="performance-controls"><button id="sound-toggle" class="quiet-button" type="button" aria-pressed="false">Sound off</button><button id="speed-toggle" class="quiet-button" type="button">2× speed</button><button id="skip-effects" class="quiet-button" type="button">Skip</button></div></div>
+            <section class="panel performance-panel" id="serving-ledger">
+              <div class="section-heading"><div><p class="eyebrow">The serving unfolds</p><h2>Serving ledger</h2><small>Every effect, score contribution, and modifier in resolution order.</small></div><div class="performance-controls"><button id="sound-toggle" class="quiet-button" type="button" aria-pressed="false">Sound off</button><button id="speed-toggle" class="quiet-button" type="button">2× speed</button><button id="skip-effects" class="quiet-button" type="button">Skip</button></div></div>
               <p id="performance-label" class="performance-label" aria-live="polite">Add an ingredient and serve to see its effects.</p>
+              <p id="last-serving-total" class="last-total">—</p>
               <div id="event-log" class="event-log"></div>
             </section>
           </div>
@@ -100,10 +101,6 @@
               <div id="residues" class="residue-list"></div>
             </section>
           </aside>
-        </section>
-        <section class="panel breakdown-panel">
-          <div class="section-heading"><div><p class="eyebrow">Last serving</p><h2>Score explanation</h2></div><span id="last-serving-total" class="last-total">—</span></div>
-          <div id="breakdown" class="breakdown empty">Your next serving will show every ingredient's contribution here.</div>
         </section>
       </div>
     </main>

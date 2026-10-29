@@ -44,6 +44,13 @@ export const GLOSSARY = {
   Broth: 'A single shared pot remnant. When an ingredient falls below 0.15 presence after serving, its remaining volume joins broth. While any broth remains, it contributes 0.25 Sugar, Acid, Aromatic, Protein, and Mineral—but no Fat. Broth also has 18 base Power at 0.6 L or more, proportionally less below 0.6 L. Serving reduces broth volume too.'
 };
 
+Object.assign(GLOSSARY, {
+  Rarity: 'Ingredient offers use Common / Uncommon / Rare weights 5 / 3 / 1. Residue rewards are a separate three-choice draw with Common / Uncommon / Rare / Ultra-rare weights 12 / 5 / 1.5 / 0.35. Rarity sets residue level caps, not ingredient score.',
+  Objective: 'A residue levels as soon as its objective counter reaches the target. Surplus progress carries into further levels immediately. Points already scored are not recalculated; the new power applies to subsequent events and bowls. A silenced residue gains no progress that bowl.',
+  Residue: 'After an encounter, choose from three seeded residue offers. Common, Uncommon, Rare, and Ultra-rare residues have increasingly lower offer weights and maximum levels 10, 8, 5, and 3. Simple effects grow a little at each level; powerful effects have harder objectives. All reset with the run.',
+  Tier: 'An installed residue starts at level 1. Repeating its objective raises it immediately, carrying surplus progress, up to its rarity cap: Common 10, Uncommon 8, Rare 5, Ultra-rare 3. Reward picks never upgrade installed residues.',
+  'Star rating': 'One star passes the chapter. Two stars require the displayed higher score and at least one positive reaction source. Three stars require the highest displayed score and at least two distinct positive scoring sources in the same bowl. Boss demands still apply.'
+});
 const TERMS = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
 const TERM_PATTERN = new RegExp(`\\b(${TERMS.join('|')})\\b`, 'gi');
 const PROPERTY_COLORS = new Set(['Protein', 'Sugar', 'Fat', 'Aromatic', 'Acid', 'Mineral']);
@@ -80,8 +87,10 @@ export function propertyBadge(property, value, reactivity) {
 
 export function heatSummary(card, currentHeat) {
   const current = temperatureMultiplier(card, currentHeat);
-  const knots = card.temperature.map(([temperature, factor]) => `<span>${temperature}° ×${factor.toFixed(2)}</span>`).join('');
-  return `<div class="heat-profile"><strong>${keyword('Heat')} score</strong><span>At ${currentHeat}°C: ×${current.toFixed(2)} base</span><div class="heat-knots" title="Multipliers between these temperatures are interpolated; exact ability cutoffs are in the description.">${knots}</div></div>`;
+  const peak = Math.max(...card.temperature.map((entry) => entry[1]));
+  const best = card.temperature.filter((entry) => entry[1] === peak).map((entry) => entry[0]);
+  const ideal = best.length === 1 ? `${best[0]}°C` : `${best[0]}–${best.at(-1)}°C`;
+  return `<div class="heat-profile"><strong>${keyword('Heat')} score</strong><span>Now ×${current.toFixed(2)} base · Best at ${ideal} (×${peak.toFixed(2)})</span></div>`;
 }
 
 export function glossaryHtml() {

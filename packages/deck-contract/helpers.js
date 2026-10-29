@@ -31,3 +31,10 @@ export function residueTier(state, residueId) {
   if (state.disabledResidueIds?.includes(residueId)) return 0;
   return state.residues.find((entry) => entry.id === residueId)?.tier ?? 0;
 }
+
+// Strong authored residues retain their original level-one and maximum power,
+// with smooth gains at every intermediate rarity-dependent level.
+export function residuePower(state, residueId, maxTier) {
+  const tier = residueTier(state, residueId);
+  return tier ? 1 + (tier - 1) / (maxTier - 1) : 0;
+}

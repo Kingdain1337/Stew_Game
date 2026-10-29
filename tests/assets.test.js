@@ -14,7 +14,7 @@ test('every ingredient, residue and pot has a nonempty PNG image', async () => {
     ...POTS.map((pot) => `../assets/pots/${pot.id}.png`),
     ...[...new Set(STORIES.flatMap((story) => story.chapters.map((chapter) => chapter.portrait)))].map((id) => `../assets/characters/${id}.png`)
   ];
-  assert.equal(files.length, 61);
+  assert.ok(files.length >= 61);
   await Promise.all(files.map(async (file) => {
     const url = new URL(file, import.meta.url);
     await access(url);

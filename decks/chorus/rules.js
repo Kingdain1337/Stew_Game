@@ -1,4 +1,4 @@
-import { oldest, residueTier, withTag } from '../../packages/deck-contract/helpers.js';
+import { oldest, residuePower, withTag } from '../../packages/deck-contract/helpers.js';
 
 export const resourceCaps = {};
 
@@ -16,10 +16,10 @@ function derived({ state, cards, originalPulses }) {
   const source = oldest(withTag(state, { cards }, 'echoStrong')) ?? oldest(withTag(state, { cards }, 'echoWeak'));
   const chemistry = positive.filter((pulse) => pulse.sourceId.startsWith('core.'));
   if (original && source) {
-    const tunedTier = residueTier(state, 'chorus.tuned-rim');
-    const cost = [.1, .08, .05, .02][tunedTier];
+    const tunedTier = residuePower(state, 'chorus.tuned-rim', 8);
+    const cost = tunedTier ? .11 - .03 * tunedTier : .1;
     const chemistryCount = new Set(positive.filter((pulse) => pulse.sourceId.startsWith('core.')).map((pulse) => pulse.sourceId)).size;
-    const silverTier = chemistryCount >= 3 ? residueTier(state, 'chorus.silver-note') : 0;
+    const silverTier = chemistryCount >= 3 ? residuePower(state, 'chorus.silver-note', 3) : 0;
     const factor = (cards[source.cardId].tags.includes('echoStrong') ? 1.25 : .75) + silverTier;
     intents.push(
       { kind: 'consume', sourceId: source.cardId, targetId: source.instanceId, amount: cost },
@@ -27,11 +27,11 @@ function derived({ state, cards, originalPulses }) {
         deltas: original.deltas.map((delta) => ({ instanceId: delta.instanceId, amount: delta.amount * factor })) }
     );
   }
-  const encore = residueTier(state, 'chorus.encore');
+  const encore = residuePower(state, 'chorus.encore', 3);
   if (source && encore && new Set(chemistry.map((pulse) => pulse.sourceId)).size >= 3) {
     const last = chemistry.at(-1);
     intents.push({ kind: 'pulse', sourceId: 'chorus.encore', origin: 'derived', parentIds: [last.eventId], participantIds: [...new Set([source.instanceId, ...last.participantIds])],
-      deltas: last.deltas.map((delta) => ({ instanceId: delta.instanceId, amount: delta.amount * (encore === 1 ? .35 : .65) })) });
+      deltas: last.deltas.map((delta) => ({ instanceId: delta.instanceId, amount: delta.amount * (.05 + .3 * encore) })) });
   }
   // These recipes inspect actual scored order, not the list of possible reactions.
   for (const recipe of [
@@ -45,7 +45,7 @@ function derived({ state, cards, originalPulses }) {
     const earlier = positive[first], later = positive[second];
     intents.push({ kind: 'pulse', sourceId: recipe.sourceId, origin: 'derived', parentIds: [earlier.eventId, later.eventId],
       participantIds: [...new Set([performer.instanceId, ...(earlier.participantIds ?? []), ...(later.participantIds ?? [])])],
-      deltas: later.deltas.map((delta) => ({ instanceId: delta.instanceId, amount: delta.amount * performer.presence * [1, 1.5, 2.5][residueTier(state, 'chorus.counterpoint')] })) });
+      deltas: later.deltas.map((delta) => ({ instanceId: delta.instanceId, amount: delta.amount * performer.presence * (residuePower(state, 'chorus.counterpoint', 5) ? residuePower(state, 'chorus.counterpoint', 5) + .5 : 1) })) });
   }
   return intents;
 }

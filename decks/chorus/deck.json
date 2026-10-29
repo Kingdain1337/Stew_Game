@@ -12,11 +12,15 @@
     "chorus.glass-noodle"
   ],
   "residues": [
+    { "id": "chorus.grain-ring", "name": "Grain Ring", "text": "Grain points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Grain", "perLevel": 0.02 }, "objective": { "metric": "grain", "target": 2, "text": "Score a Grain in 2 bowls." }, "imageId": "chorus.tuned-rim", "symbol": "+" },
+    { "id": "chorus.table-tap", "name": "Table Tap", "text": "All points +1% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "all", "perLevel": 0.01 }, "objective": { "metric": "servings", "target": 3, "text": "Serve 3 bowls." }, "imageId": "chorus.tuned-rim", "symbol": "+" },
+    { "id": "chorus.small-chime", "name": "Small Chime", "text": "Small-serving points +1.5% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "size", "size": "small", "perLevel": 0.015 }, "objective": { "metric": "small", "target": 2, "text": "Serve 2 small bowls." }, "imageId": "chorus.silver-note", "symbol": "+" },
+    { "id": "chorus.second-bell", "name": "Second Bell", "text": "Grain points +3% per level.", "rarity": "uncommon", "maxTier": 8, "effect": { "kind": "type", "type": "Grain", "perLevel": 0.03 }, "objective": { "metric": "echoes", "target": 3, "text": "Create 3 source echoes." }, "imageId": "chorus.tuned-rim", "symbol": "+" },
     {
       "id": "chorus.tuned-rim",
       "name": "Tuned Rim",
-      "text": "Every echo costs 0.08 / 0.05 presence instead of 0.10.",
-      "maxTier": 2,
+      "text": "Echo cost falls from 0.08 to 0.05 presence across levels 1–8.",
+      "rarity": "uncommon", "maxTier": 8,
       "objective": {
         "metric": "echoes",
         "target": 6,
@@ -26,8 +30,8 @@
     {
       "id": "chorus.silver-note",
       "name": "Silver Note",
-      "text": "When 3 distinct common reactions score, add +100% / +200% of the opening pulse to its echo.",
-      "maxTier": 2,
+      "text": "With 3 common reactions, the first echo gains +100% to +200% of its source across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "chemistryThree",
         "target": 3,
@@ -37,8 +41,8 @@
     {
       "id": "chorus.counterpoint",
       "name": "Counterpoint",
-      "text": "Harmony and Crescendo copies gain ×1.5 / ×2.5 points. Both still require their specific reaction order.",
-      "maxTier": 2,
+      "text": "Harmony and Crescendo copies scale from ×1.5 to ×2.5 across levels 1–5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "sequences",
         "target": 3,
@@ -50,8 +54,8 @@
     {
       "id": "chorus.encore",
       "name": "Encore",
-      "text": "With an operational echo source and 3 positive common reactions, copy 35% / 65% of the LAST common reaction as an extra derived pulse. No extra presence cost; cannot echo again.",
-      "maxTier": 2,
+      "text": "With 3 common reactions, Encore copies 35%–65% of the last reaction across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "chemistryThree",
         "target": 4,

@@ -5,7 +5,7 @@ import { STOCKS, SERVING_SIZES, servingSize } from './stocks.js';
 import { advanceResidues, servingMetrics } from './residue-objectives.js';
 export { STORIES, getStory, getEncounter, STOCKS, SERVING_SIZES, servingSize };
 
-export const RULES_VERSION = 5;
+export const RULES_VERSION = 7;
 export const SERVING_VOLUME = 0.4;
 export const BROTH_CARD_ID = 'pantry.broth';
 export const BROTH_CUTOFF = 0.15;
@@ -24,6 +24,7 @@ export const REACTIONS = [
 ];
 
 const RARITY_WEIGHT = { common: 5, uncommon: 3, rare: 1 };
+const RESIDUE_RARITY_WEIGHT = { common: 12, uncommon: 5, rare: 1.5, 'ultra-rare': .35 };
 const MAX_EVENTS = 256;
 const EPSILON = 1e-9;
 
@@ -88,7 +89,9 @@ function offerFrom(state, catalog, candidates, chosen) {
 
 function generateOffers(state, catalog, events) {
   const included = new Set(state.deckIds);
-  const all = Object.values(catalog.cards).filter((card) => included.has(card.deckId) && !card.system);
+  const foragedOpening = state.storyId === 'road' && state.encounterIndex === 0;
+  const all = Object.values(catalog.cards).filter((card) => included.has(card.deckId) && !card.system &&
+    (!foragedOpening || ['Fungus', 'Fruit', 'Vegetable', 'Spice'].includes(card.type)));
   ensure(all.length >= 3, 'Offer pool needs at least three ingredients');
   const selected = [];
   const themes = state.deckIds.filter((id) => id !== 'pantry');
@@ -163,6 +166,19 @@ function getPot(state) { return POTS.find((pot) => pot.id === state.potId); }
 
 export function encounterTarget(state) {
   return getEncounter(state).target;
+}
+
+export function starThresholds(encounter) {
+  // Aspirational gaps grow in absolute points without becoming impossible in
+  // late chapters, whose pass targets already scale sharply with the story.
+  return [encounter.target, Math.ceil(encounter.target + 10 * Math.sqrt(encounter.target)), Math.ceil(encounter.target + 26 * Math.sqrt(encounter.target))];
+}
+
+export function earnedStars(state) {
+  const [pass, skilled, engine] = starThresholds(getEncounter(state));
+  if (state.score + EPSILON < pass || (getEncounter(state).boss?.requiredTypes && state.encounterTypes.length < getEncounter(state).boss.requiredTypes)) return 0;
+  const sources = state.encounterPulseSources?.length ?? 0;
+  return state.score >= engine && (state.encounterMaxConcurrentSources ?? 0) >= 2 ? 3 : state.score >= skilled && sources >= 1 ? 2 : 1;
 }
 
 export function occupiedVolume(entry, catalog) {
@@ -363,16 +379,25 @@ function scoreServing(state, catalog, events, resolution, pendingOriginal) {
   const residueMultiplier = 1;
   const serving = servingSize(state);
   let portionMultiplier = serving.multiplier;
-  if (serving.id === 'small') portionMultiplier += .15 * residueTier(state, 'pantry.tasting-spoon');
+  if (serving.id === 'small') portionMultiplier += .15 * (residueTier(state, 'pantry.tasting-spoon') ? 1 + (residueTier(state, 'pantry.tasting-spoon') - 1) / 7 : 0);
   const types = new Set(state.contents.filter((entry) => !catalog.cards[entry.cardId].system).map((entry) => catalog.cards[entry.cardId].type));
-  if (serving.id === 'large' && types.size >= 3) portionMultiplier += .2 * residueTier(state, 'pantry.grand-table');
+  if (serving.id === 'large' && types.size >= 3) portionMultiplier += .2 * (residueTier(state, 'pantry.grand-table') ? 1 + (residueTier(state, 'pantry.grand-table') - 1) / 4 : 0);
   const demandMultiplier = state.requestFulfilled ? encounter.boss.giftBonus : 1;
   const details = state.contents.map((entry) => {
     const score = scores[entry.instanceId];
     const card = catalog.cards[entry.cardId];
     const customer = customerMultiplier(encounter, card, state.temperature);
-    const total = score.raw * customer * residueMultiplier * portionMultiplier * demandMultiplier;
-    return { ...score, customer, residueMultiplier, servingMultiplier: portionMultiplier, demandMultiplier, total };
+    const applicable = state.residues.filter((installed) => !state.disabledResidueIds.includes(installed.id)).map((installed) => ({ installed, definition: catalog.residues[installed.id] })).filter(({ definition }) => {
+      const effect = definition.effect;
+      return effect && (effect.kind === 'all' || (effect.kind === 'type' && effect.type === card.type) ||
+        (effect.kind === 'size' && effect.size === serving.id) || (effect.kind === 'heat' && state.temperature >= (effect.min ?? 0) && state.temperature <= (effect.max ?? 120)));
+    });
+    const simpleBonus = applicable.reduce((sum, { installed, definition }) => sum + installed.tier * definition.effect.perLevel, 0);
+    const adjustedResidueMultiplier = residueMultiplier + simpleBonus;
+    const preResidue = score.raw * customer * portionMultiplier * demandMultiplier;
+    for (const { installed, definition } of applicable) appendEvent(state, events, 'residueBonusScored', 'score', definition.id, [entry.instanceId], { amount: preResidue * installed.tier * definition.effect.perLevel, level: installed.tier, cardId: card.id });
+    const total = preResidue * adjustedResidueMultiplier;
+    return { ...score, customer, residueMultiplier: adjustedResidueMultiplier, servingMultiplier: portionMultiplier, demandMultiplier, total };
   });
   const total = details.reduce((sum, detail) => sum + detail.total, 0);
   number(total, 'serving score', 0, 1e12);
@@ -474,22 +499,49 @@ function servingStep(state, catalog, action, events) {
   const pendingOriginal = [];
   const resolution = forServing(catalog, state, events, pendingOriginal);
   resolution.runHandlers('preServe');
+  // Progress from size, heat, additions and pre-serve resources is awarded now,
+  // before scoring. A level gained here can change this very bowl.
+  const earlyMetrics = servingMetrics(state, events, { details: [], effectiveProperties: {} }, catalog);
+  advanceResidues(state, catalog, earlyMetrics, (type, id, data) => appendEvent(state, events, type, 'progression', id, [], data));
   const total = scoreServing(state, catalog, events, resolution, pendingOriginal);
+  const bowlSources = [...new Set(events.filter((event) => event.type === 'reactionPulse' && event.data.total > 0).map((event) => event.sourceId))];
+  state.encounterPulseSources = [...new Set([...(state.encounterPulseSources ?? []), ...bowlSources])];
+  state.encounterMaxConcurrentSources = Math.max(state.encounterMaxConcurrentSources ?? 0, bowlSources.length);
+  const varietyGoal = getEncounter(state).boss?.requiredTypes;
+  if (varietyGoal) {
+    const types = state.lastBreakdown.details.filter((detail) => detail.total > 0 && !catalog.cards[detail.cardId].system)
+      .map((detail) => catalog.cards[detail.cardId].type);
+    const before = state.encounterTypes.length;
+    state.encounterTypes = [...new Set([...state.encounterTypes, ...types])];
+    appendEvent(state, events, 'bossVarietyProgress', 'score', getEncounter(state).id, [], { before, after: state.encounterTypes.length, target: varietyGoal, types: [...state.encounterTypes] });
+  }
   const metrics = servingMetrics(state, events, state.lastBreakdown, catalog);
+  for (const [metric, amount] of Object.entries(earlyMetrics)) metrics[metric] = Math.max(0, (metrics[metric] ?? 0) - amount);
   applyDepletion(state, catalog, events, resolution.retention, resolution.originalPulses);
   advanceResidues(state, catalog, metrics, (type, id, data) => appendEvent(state, events, type, 'progression', id, [], data));
   state.round++;
   if (state.round >= getEncounter(state).servings) {
     const target = encounterTarget(state);
-    if (state.score + EPSILON < target) {
+    state.lastEncounterStars = earnedStars(state);
+    state.chapterResults.push({ encounterId: getEncounter(state).id, score: state.score, stars: state.lastEncounterStars });
+    if (!state.lastEncounterStars) {
       state.phase = 'lost';
-      appendEvent(state, events, 'encounterLost', 'encounter', getEncounter(state).id, [], { score: state.score, target });
+      appendEvent(state, events, 'encounterLost', 'encounter', getEncounter(state).id, [], { score: state.score, target, stars: 0, variety: state.encounterTypes.length, requiredTypes: varietyGoal ?? 0 });
     } else if (state.encounterIndex === getStory(state).chapters.length - 1) {
       state.phase = 'won';
-      appendEvent(state, events, 'runWon', 'encounter', getEncounter(state).id, [], { score: state.score, target });
+      appendEvent(state, events, 'runWon', 'encounter', getEncounter(state).id, [], { score: state.score, target, stars: state.lastEncounterStars });
     } else {
       state.phase = 'reward';
-      appendEvent(state, events, 'encounterWon', 'encounter', getEncounter(state).id, [], { score: state.score, target });
+      const pool = eligibleResidues(state, catalog);
+      state.rewardOffers = [];
+      while (state.rewardOffers.length < Math.min(3, pool.length)) {
+        const remaining = pool.filter((item) => !state.rewardOffers.includes(item.id));
+        const totalWeight = remaining.reduce((sum, item) => sum + RESIDUE_RARITY_WEIGHT[item.rarity], 0);
+        let draw = random(state) * totalWeight;
+        const chosen = remaining.find((item) => (draw -= RESIDUE_RARITY_WEIGHT[item.rarity]) < 0) ?? remaining.at(-1);
+        state.rewardOffers.push(chosen.id);
+      }
+      appendEvent(state, events, 'encounterWon', 'encounter', getEncounter(state).id, [], { score: state.score, target, stars: state.lastEncounterStars, rewardOffers: [...state.rewardOffers] });
     }
   } else prepareTurn(state, catalog, events);
   return total;
@@ -536,6 +588,10 @@ function rewardStep(state, catalog, action, events) {
   state.encounterIndex++;
   state.round = 0;
   state.score = 0;
+  state.encounterTypes = [];
+  state.encounterPulseSources = [];
+  state.encounterMaxConcurrentSources = 0;
+  state.rewardOffers = null;
   state.phase = 'chapter';
   state.offers = [];
   state.disabledResidueIds = [];
@@ -546,15 +602,19 @@ function rewardStep(state, catalog, action, events) {
   appendEvent(state, events, 'chapterRevealed', 'encounter', getEncounter(state).id, [], { encounterIndex: state.encounterIndex });
 }
 
-export function availableResidues(state, catalog) {
+function eligibleResidues(state, catalog) {
   const contributedDecks = new Set(state.contributedIds.filter((id) => !catalog.cards[id]?.system).map((id) => catalog.cards[id]?.deckId));
   return Object.values(catalog.residues).filter((entry) => contributedDecks.has(entry.deckId) && !state.residues.some((installed) => installed.id === entry.id)).sort((a, b) => a.id.localeCompare(b.id));
+}
+export function availableResidues(state, catalog) {
+  const eligible = eligibleResidues(state, catalog);
+  return state.phase === 'reward' && Array.isArray(state.rewardOffers) ? eligible.filter((entry) => state.rewardOffers.includes(entry.id)) : eligible;
 }
 
 export function createGame(catalog, { deckIds = ['pantry', 'culture'], potId = 'iron', storyId = 'royal', seed = 1 } = {}) {
   ensure(catalog?.version === '0.2.0', 'Unsupported content catalog');
   const requested = [...new Set(deckIds)];
-  ensure(requested.includes('pantry'), 'Every run includes the castle pantry');
+  ensure(requested.includes('pantry'), 'Every run includes the common Pantry');
   ensure(requested.length >= 2 && requested.length <= 3, 'Choose one or two themed decks');
   ensure(requested.every((id) => catalog.decks[id]), 'Unknown deck');
   ensure(POTS.some((pot) => pot.id === potId), 'Unknown pot');
@@ -565,12 +625,12 @@ export function createGame(catalog, { deckIds = ['pantry', 'culture'], potId = '
     rulesVersion: RULES_VERSION, catalogVersion: catalog.version, deckIds: ['pantry', ...requested.filter((id) => id !== 'pantry').sort()], potId, storyId,
     seed, rng: (seed >>> 0) || 0x6d2b79f5, nextEvent: 0, nextInstance: 0,
     phase: 'stock', encounterIndex: 0, round: 0, score: 0, totalScore: 0, temperature: 80, servingSize: 'standard',
-    contents: [], offers: [], stockOffers: [], residues: [], disabledResidueIds: [], bossTurn: { forcedHeat: null, giftCardId: null }, contributedIds: [], lastBreakdown: null, commandLog: [],
+    contents: [], offers: [], stockOffers: [], residues: [], rewardOffers: null, disabledResidueIds: [], bossTurn: { forcedHeat: null, giftCardId: null }, contributedIds: [], encounterTypes: [], encounterPulseSources: [], encounterMaxConcurrentSources: 0, chapterResults: [], lastEncounterStars: 0, lastBreakdown: null, commandLog: [],
     deckState: Object.fromEntries(Object.keys(catalog.decks).map((id) => [id, { resources: {}, flags: {} }]))
   };
   const events = [];
   appendEvent(state, events, 'runStarted', 'setup', 'core.run', [], { seed, potId, storyId, deckIds: state.deckIds });
-  const pool = [...STOCKS];
+  const pool = STOCKS.filter((stock) => storyId !== 'road' || ['pantry.stock-herb', 'pantry.stock-mushroom', 'pantry.stock-orchard', 'pantry.stock-root'].includes(stock.id));
   while (state.stockOffers.length < 3) state.stockOffers.push(pool.splice(Math.floor(random(state) * pool.length), 1)[0].id);
   appendEvent(state, events, 'stocksOffered', 'setup', 'core.stock', [], { stockOffers: [...state.stockOffers] });
   return { state, events, errors: [] };

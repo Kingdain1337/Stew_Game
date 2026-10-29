@@ -6,13 +6,14 @@ import { GLOSSARY, glossaryHtml, heatSummary, highlightKeywords, propertyBadge }
 
 const catalog = await loadCatalog(async (url) => JSON.parse(await readFile(url, 'utf8')));
 
-test('all 30 displayed cards have detailed deck-owned descriptions and heat curves', () => {
+test('all 30 cards use concise visible copy and detailed hover copy', () => {
   const cards = Object.values(catalog.cards).filter((card) => !card.system);
   assert.equal(cards.length, 30);
   for (const card of cards) {
-    assert.ok(card.text.length >= 80, card.id);
-    assert.ok(heatSummary(card, 80).includes('At 80°C:'), card.id);
-    assert.ok(card.text.includes('°C') || /at any heat|at very high heat|at high heat|at cool heat|heat cutoff/i.test(card.text), card.id);
+    assert.ok(card.text.length >= 20 && card.text.length <= 125, card.id);
+    assert.ok(!card.text.includes('°C'), `${card.id}: cutoffs belong in details`);
+    assert.ok(card.details.length >= 80, card.id);
+    assert.ok(heatSummary(card, 80).includes('Best at'), card.id);
   }
 });
 

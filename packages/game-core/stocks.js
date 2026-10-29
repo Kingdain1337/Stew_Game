@@ -4,9 +4,9 @@ export const SERVING_SIZES = [
   { id: 'large', name: 'Large', volume: .7, multiplier: 1.5, text: '×1.5 points · faster decay · make room' }
 ];
 export const STOCKS = [
-  ['herb', 'Garden Rinse', { aromatic: .18, mineral: .1 }, 'pantry.onion'],
+  ['herb', 'Woodland Herb Rinse', { aromatic: .18, mineral: .1 }, 'pantry.onion'],
   ['bone', 'Thin Bone Stock', { protein: .18, mineral: .1 }, 'hearth.marrow'],
-  ['orchard', 'Orchard Water', { sugar: .18, acid: .1 }, 'culture.plum'],
+  ['orchard', 'Wild Berry Water', { sugar: .18, acid: .1 }, 'culture.plum'],
   ['mushroom', 'Mushroom Water', { aromatic: .14, protein: .14 }, 'culture.candycap'],
   ['citrus', 'Citrus Rinse', { acid: .18, sugar: .1 }, 'pantry.lemon'],
   ['root', 'Root Simmer', { mineral: .18, sugar: .1 }, 'culture.peel']

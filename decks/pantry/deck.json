@@ -9,11 +9,15 @@
   "symbol": "✦",
   "openingIds": [],
   "residues": [
+    { "id": "pantry.root-scrape", "name": "Root Scrape", "text": "Vegetable points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Vegetable", "perLevel": 0.02 }, "objective": { "metric": "vegetable", "target": 2, "text": "Score a Vegetable in 2 bowls." }, "imageId": "pantry.cool-coating", "symbol": "+" },
+    { "id": "pantry.fruit-peel", "name": "Fruit Peel", "text": "Fruit points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Fruit", "perLevel": 0.02 }, "objective": { "metric": "fruit", "target": 2, "text": "Score a Fruit in 2 bowls." }, "imageId": "pantry.cool-coating", "symbol": "+" },
+    { "id": "pantry.steady-spoon", "name": "Steady Spoon", "text": "All points +1% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "all", "perLevel": 0.01 }, "objective": { "metric": "servings", "target": 3, "text": "Serve 3 bowls." }, "imageId": "pantry.cool-coating", "symbol": "+" },
+    { "id": "pantry.wide-ladle", "name": "Wide Ladle", "text": "Large-serving points +2% per level.", "rarity": "uncommon", "maxTier": 8, "effect": { "kind": "size", "size": "large", "perLevel": 0.02 }, "objective": { "metric": "large", "target": 3, "text": "Serve 3 large bowls." }, "imageId": "pantry.hearth-coating", "symbol": "+" },
     {
       "id": "pantry.hearth-coating",
       "name": "Hearth Coating",
-      "text": "Browning and Extraction bonus points ×1.5 / ×2. No extra heat condition.",
-      "maxTier": 2,
+      "text": "Browning and Extraction points scale from ×1.5 at level 1 to ×2 at level 5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "browning",
         "target": 3,
@@ -23,8 +27,8 @@
     {
       "id": "pantry.cool-coating",
       "name": "Cool Coating",
-      "text": "Infusion and Preservation bonus points ×1.5 / ×2. No extra heat condition.",
-      "maxTier": 2,
+      "text": "Infusion and Preservation points scale from ×1.5 at level 1 to ×2 at level 5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "infusion",
         "target": 3,
@@ -34,8 +38,8 @@
     {
       "id": "pantry.tasting-spoon",
       "name": "Tasting Spoon",
-      "text": "Small servings score ×0.80 / ×0.95 instead of ×0.65. Their slow depletion is unchanged.",
-      "maxTier": 2,
+      "text": "Small-bowl score scales from ×0.80 at level 1 to ×0.95 at level 8.",
+      "rarity": "uncommon", "maxTier": 8,
       "objective": {
         "metric": "small",
         "target": 6,
@@ -47,8 +51,8 @@
     {
       "id": "pantry.grand-table",
       "name": "Grand Table",
-      "text": "Large servings with at least 3 non-system ingredient types score ×1.70 / ×1.90 instead of ×1.50.",
-      "maxTier": 2,
+      "text": "Large bowls with 3 ingredient types scale from ×1.70 at level 1 to ×1.90 at level 5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "grand",
         "target": 4,

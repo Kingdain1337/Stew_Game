@@ -1,5 +1,7 @@
 # Balance diagnostics — stories and servings v5
 
+Historical v5 diagnostics. The clock-town story has been replaced by the seven-encounter caravan route, and the playable setup now selects one themed deck. See [the current story brief](STORY_WRITING_V6.md); the results below do not describe the current caravan route.
+
 27 October 2026. This is a small deterministic diagnostic, **not a measured player win rate or a claim of finished balance**. It supersedes the v4 balance numbers for the current build.
 
 ## Method

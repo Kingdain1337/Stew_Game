@@ -12,11 +12,15 @@
     "culture.yeast"
   ],
   "residues": [
+    { "id": "culture.mushroom-dust", "name": "Mushroom Dust", "text": "Fungus points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Fungus", "perLevel": 0.02 }, "objective": { "metric": "fungus", "target": 2, "text": "Score a Fungus in 2 bowls." }, "imageId": "culture.seasoned-crock", "symbol": "+" },
+    { "id": "culture.sweet-scrap", "name": "Sweet Scrap", "text": "Fruit points +2% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "type", "type": "Fruit", "perLevel": 0.02 }, "objective": { "metric": "fruit", "target": 2, "text": "Score a Fruit in 2 bowls." }, "imageId": "culture.sugar-glaze", "symbol": "+" },
+    { "id": "culture.cool-cloth", "name": "Cool Cloth", "text": "Points at 60°C or below +1.5% per level.", "rarity": "common", "maxTier": 10, "effect": { "kind": "heat", "max": 60, "perLevel": 0.015 }, "objective": { "metric": "cool", "target": 3, "text": "Serve 3 cool bowls (60°C or below)." }, "imageId": "culture.seasoned-crock", "symbol": "+" },
+    { "id": "culture.ferment-jar", "name": "Ferment Jar", "text": "Fungus points +3% per level.", "rarity": "uncommon", "maxTier": 8, "effect": { "kind": "type", "type": "Fungus", "perLevel": 0.03 }, "objective": { "metric": "cultureGrown", "target": 4, "text": "Grow 4 Culture." }, "imageId": "culture.seasoned-crock", "symbol": "+" },
     {
       "id": "culture.seasoned-crock",
       "name": "Seasoned Crock",
-      "text": "Each harvest spending at least 4 Culture returns 1 / 2 Culture. Smaller harvests do not refill it.",
-      "maxTier": 2,
+      "text": "Harvests spending 4+ Culture return 1–2 Culture across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "harvestFour",
         "target": 2,
@@ -26,8 +30,8 @@
     {
       "id": "culture.sugar-glaze",
       "name": "Sugar Glaze",
-      "text": "Every valid growth gains 1 / 2 extra Culture. A full-six harvest scores ×1.5 / ×2.",
-      "maxTier": 2,
+      "text": "Growth gains 1–2 extra Culture; full-six Harvest scales from ×1.5 to ×2 across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "harvestSix",
         "target": 1,
@@ -37,8 +41,8 @@
     {
       "id": "culture.living-lid",
       "name": "Living Lid",
-      "text": "With at least 3 banked Culture, Preservation bonus points gain ×1.5 / ×2.25. Grow cool, then let the bank season your next bowl.",
-      "maxTier": 2,
+      "text": "At 3+ banked Culture, Preservation scales from ×1.5 to ×2.25 across levels 1–5.",
+      "rarity": "rare", "maxTier": 5,
       "objective": {
         "metric": "cultureGrown",
         "target": 8,
@@ -50,8 +54,8 @@
     {
       "id": "culture.last-drop",
       "name": "The Last Drop",
-      "text": "A harvest with at least 2.5 effective Acid scores ×1.4 / ×1.8. Multiplies Sugar Glaze when both conditions hold.",
-      "maxTier": 2,
+      "text": "Harvest with 2.5+ effective Acid scales from ×1.4 to ×1.8 across levels 1–3.",
+      "rarity": "ultra-rare", "maxTier": 3,
       "objective": {
         "metric": "strongHarvest",
         "target": 2,
